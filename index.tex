@@ -118,18 +118,39 @@
 
     \section{Background}
     \subsection{coreutils}
-    On \citedate{FileUtilsAnnouncement}, \citeauthor{FileUtilsAnnouncement} announced fileutils, a suite of utilities for reading and altering files\cite{FileUtilsAnnouncement}. A year later, he released textutils (to parse and manipulate text)\cite{TextUtilsAnnouncement} and shellutils (to write powerful shell scripts)\cite{ShellUtilsAnnouncement}. These three collections were folded into one on \citedate{CoreUtilsAnnouncement}, called the GNU coreutils.\cite{CoreUtilsAnnouncement} \code{ls}, \code{cat}, \code{base64}, \code{grep}, \code{env}, or \code{whoami}: GNU's coreutils are at the basis of how users interact with most Linux distributions on the command line.\cite{GNULinux}
+    On \citedate{FileUtilsAnnouncement}, \citeauthor{FileUtilsAnnouncement} announced fileutils, a suite of utilities for reading and altering files\cite{FileUtilsAnnouncement}. A year later, he released textutils (to parse and manipulate text)\cite{TextUtilsAnnouncement} and shellutils (to write powerful shell scripts)\cite{ShellUtilsAnnouncement}. These three collections were folded into one on \citedate{CoreUtilsAnnouncement}, called the GNU coreutils.\cite{CoreUtilsAnnouncement} \code{ls}, \code{cat}, \code{base64}, \code{grep}, \code{env}, or \code{whoami}: GNU's coreutils are at the basis of how users interact with most Linux distributions on the command line.\cite{GNULinux} Because they are so widely used and central to how users interact with their computers, software quality and lack of software defects is especially important to coreutils.
 
     Version 9.5 of the GNU coreutils was released on \citedate{GNUCoreUtils9.5} and thus marks the current version as of this report. 106 programs are built per default.\cite{GNUCoreUtils9.5}
+
+    \subsubsection{Interface}
+
+    Users primarily interact with coreutils through the command line or in shell scripts. They take different kinds of inputs, i.e. behave differently based on changes to:
+    \begin{itemize}
+        \item Data passed to \code{stdin}, e.g. through Unix pipes
+        \item Command line arguments:
+              \begin{itemize}
+                  \item Unnamed arguments, either required (such as \code{cp <source> <destination>}) or optional (such as \code{ls [directory]})
+                  \item Flags without any associated data, such as \code{--help}
+                  \item Flags with associated data, either required (such as \code{dd if=<input file> of=<output file>}) or optional {such as \code{-name <pattern>} in \code{find}}
+              \end{itemize}
+        \item Environment variables, such as \code{LANG}
+        \item The file system content, such as for \code{ls}
+    \end{itemize}
+
+    The output, or effects of invocations fall into the following categories:
+    \begin{itemize}
+        \item Data written to \code{stdout}
+        \item Data written to \code{stderr}
+        \item The exit status of the process
+        \item The signal terminating the process
+        \item Changes to the file system
+    \end{itemize}
 
     \subsubsection{Alternative Implementations}
 
     Since the release of GNU coreutils, multiple alternative implementations were released. Notable among those are BusyBox\cite{BusyBox}, which aims to provide most of the GNU coreutils with a focus on resource restrictions. It is therefore primarily used in embedded systems\cite{BusyBox} or tiny distributions such as Alpine Linux\cite{Alpine}.
 
     In the general push towards rewriting software in memory-safe languages, the uutils project\cite{Uutils} maintains a drop-in replacement implementation of the GNU coreutils written in Rust.\cite{UutilsCoreUtils} It does contain all programs, but is still missing certain options. All differences with GNU's coreutils are treated as bugs. It further aims to not only work on Linux, but is also available for MacOS and Windows.
-
-    \subsubsection{Interface}
-
 
 
     \subsubsection{Build System}
