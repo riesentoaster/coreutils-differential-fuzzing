@@ -121,7 +121,8 @@
 
     \section{Background}
     \subsection{coreutils}
-    On \citedate{FileUtilsAnnouncement}, \citeauthor{FileUtilsAnnouncement} announced fileutils, a suite of utilities for reading and altering files\cite{FileUtilsAnnouncement}. A year later, he released textutils (to parse and manipulate text)\cite{TextUtilsAnnouncement} and shellutils (to write powerful shell scripts)\cite{ShellUtilsAnnouncement}. These three collections were folded into one on \citedate{CoreUtilsAnnouncement}, called the GNU coreutils.\cite{CoreUtilsAnnouncement} \code{ls}, \code{cat}, \code{base64}, \code{grep}, \code{env}, or \code{whoami}: GNU's coreutils are at the basis of how users interact with most Linux distributions on the command line.\cite{GNULinux} Because they are so widely used and central to how users interact with their computers, software quality and lack of software defects is especially important to coreutils.
+
+    On \citedate{FileUtilsAnnouncement}, {\DeclareNameAlias{labelname}{given-family}\citeauthor{FileUtilsAnnouncement}} announced fileutils, a suite of utilities for reading and altering files\cite{FileUtilsAnnouncement}. A year later, he released textutils (to parse and manipulate text)\cite{TextUtilsAnnouncement} and shellutils (to write powerful shell scripts)\cite{ShellUtilsAnnouncement}. These three collections were folded into one on \citedate{CoreUtilsAnnouncement}, called the GNU coreutils.\cite{CoreUtilsAnnouncement} \code{ls}, \code{cat}, \code{base64}, \code{grep}, \code{env}, or \code{whoami}: GNU's coreutils are at the basis of how users interact with most Linux distributions on the command line.\cite{GNULinux} Because they are so widely used and central to how users interact with their computers, software quality and lack of software defects is especially important to coreutils.
 
     Version 9.5 of the GNU coreutils was released on \citedate{GNUCoreUtils9.5} and thus marks the current version as of this report. 106 programs are built per default.\cite{GNUCoreUtils9.5}
 
@@ -233,9 +234,19 @@
 
     This approach requires restricting the fuzzer to only execute whitelisted parts of the program under test, specifically to only add certain command line arguments. This also means that certain parts of the command line argument parsing routines will never get tested, since only valid command line arguments will be tested. The associated data to a certain flag (see Section~\ref{CoreutilsInterface}) may still be invalid and the corresponding parsing routine will be tested.
 
-    Since this project uses LibAFL, this can be achieved quite easily by implementing a custom \code{Input} type (refer to Section~\ref{LibAFLTraits}).
+    Since this project uses LibAFL, this can be achieved quite easily by implementing a custom \code{Input} type (refer to Section~\ref{LibAFLTraits}). By introducing a trait which contains functions that map the \code{Input} to the arguments necessary for the \code{Executor}, it is possible to build a system where the only addition to the codebase for additional programs to test is adding
+    \begin{itemize}
+        \item a custom \code{Input} struct,
+        \item a mapping function for the \code{Executor},
+        \item a few simple trait implementations needed for the fuzzer (such as \code{Display}), with many necessary implementations available as \code{derive}s,
+        \item a \code{Generator} for the above, which will generate random seeds for the fuzzer to start from, and
+        \item a set of \code{Mutator}s, which will mutate the parts of the \code{Input} independently. For this part, the author introduced a system which allows reusing the default byte array mutators for any \code{Input} part consisting of a byte array.
+    \end{itemize}
 
     \subsection{Optimizations}
+
+    This basic fuzzer can then be augmented by systems that LibAFL provide. With very little additional code, the fuzzer can be extended to run on all available cores or even multiple machines, use advanced algorithms to choose the best \code{Mutator}, etc. Additional \code{Observer}s and \code{Feedback}s, such as a \code{TimeoutFeedback} can be introduced with no additional configuration. This is where LibAFL as a framework simplifies building an advanced fuzzer significantly.
+
     \subsection{Gathering Coverage Information from GNU coreutils}
     \subsubsection{Instrumentation}
     \subsubsection{Dynamic Interface}
