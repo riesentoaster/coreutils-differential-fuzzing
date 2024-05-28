@@ -10,7 +10,7 @@
 \usepackage{listings}
 \lstset{
     backgroundcolor=\color[RGB]{240, 240, 240},   
-    basicstyle=\ttfamily\footnotesize,
+    basicstyle=\ttfamily,
     breakatwhitespace=false,
     breaklines=true,
     keepspaces=true,
@@ -57,7 +57,7 @@
 \DeclareFieldFormat*{citetitle}{\textit{#1}}
 \hfuzz=50px
 \hbadness=10000
-\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\code}[2][]{\lstinline[language=#1, breaklines=false]{#2}}
 \let\savedCite=\cite
 \renewcommand{\cite}{\unskip~\savedCite}
 \let\savedRef=\ref
@@ -158,6 +158,7 @@
     In the general push towards rewriting software in memory-safe languages, the uutils project\cite{Uutils} maintains a drop-in replacement implementation of the GNU coreutils written in Rust.\cite{UutilsCoreUtils} It does contain all programs, but is still missing certain options. All differences with GNU's coreutils are treated as bugs. It further aims to not only work on Linux, but is also available for MacOS and Windows.
 
     \subsubsection{Build System}
+    \label{CoreutilsBuildSystem}
 
     The GNU coreutils employ a complex, multi-step build system, including Autoconf\cite{Autoconf} and Automake\cite{Automake}. Changes to either the code or the build system configuration require a deep understanding of the entire ecosystem to ensure no unintended changes to the resulting binaries are introduced. uutils' version of coreutils relies on cargo as its build system, which make outcomes of changes to the code much more predictable.
 
@@ -248,7 +249,41 @@
     This basic fuzzer can then be augmented by systems that LibAFL provide. With very little additional code, the fuzzer can be extended to run on all available cores or even multiple machines, use advanced algorithms to choose the best \code{Mutator}, etc. Additional \code{Observer}s and \code{Feedback}s, such as a \code{TimeoutFeedback} can be introduced with no additional configuration. This is where LibAFL as a framework simplifies building an advanced fuzzer significantly.
 
     \subsection{Gathering Coverage Information from GNU coreutils}
+
+    To test any non surface level code, the fuzzer needs information of some form about what parts of the binary just got executed. This coverage information can fundamentally be gathered in two ways: Either the necessary logic is compiled into the binary, or it is added dynamically. While the former is more performant, it also requires changes to the binary. And as described in Section~\ref{CoreutilsBuildSystem}, making changes to the code or build system of GNU coreutils is a complex task. Previous experiments by the author on coreutils showed that in principle, adding compile-time coverage-gathering instrumentation is possible.\cite{VT1}
+
+    \subsubsection{LibAFL's Coverage Interface}
+
+    LibAFL heavily relies on shared memory maps for a wide range of internal functionality like corpus synchronization across threads. It is further important for different kinds of \code{Feedback}, especially coverage information. Its built-in logic for adding coverage gathering instrumentation to a binary to test relies on passes in the clang compiler, specifically the \code{SanitizerCoverage}\cite{SanitizerCoverage} module. This module includes different levels of coverage instrumentation, the examples provided by LibAFL typically use \code{trace-pc-guard}. This will insert the following call at every edge:
+
+    \begin{lstlisting}[language=C]
+__sanitizer_cov_trace_pc_guard(&guard_variable)
+    \end{lstlisting}
+
+    The implementation of this function is then left for the developer.  The LibAFL module \code{libafl\_targets} provides such implementations which allocate a shared memory map with the correct size and then on the execution of each edge marks the memory section associated with it. Finally, a \code{MaxMapFeedback} is used as feedback in the fuzzer, which makes the fuzzer prioritize inputs that visited new paths in the binary under test, since additional bits are set in the shared memory map.
+
+    However, these default implementations only work if the fuzzer and binary under test exist in the same process, i.e. when the fuzzer and source code to test are compiled into a single unit. Based on the reasoning in Section~\ref{CoreutilsBuildSystem}, this is not a feasible solution for this project. Hence, a different approach was created.
+
     \subsubsection{Instrumentation}
+
+    First, inspired by the simple default implementation provided in the documentation for \code{SanitizerCoverage}\cite{SanitizerCoverage}, a simple implementation for the required function is written where the map created by the pass in the tested binary is marked as the edges are executed. Then, additional exported functions are written which make the gathered information available to other parts of the binary. This file is then compiled to an object file.
+
+    In a next step, the GNU coreutils are built using the following flags:
+    \begin{itemize}
+        \item For the compiler (\code{CFLAGS}):
+              \begin{itemize}
+                  \item \code{-g} retains the symbol information in the compiled binary.
+                  \item \code{-fsanitize-coverage=trace-pc-guard} introduces the function calls as specified above. Note: The custom implementation is not linked to it yet, it only contains a weakly linked default implementation.
+              \end{itemize}
+        \item For the linker (\code{LDFLAGS}):
+              \begin{itemize}
+                  \item \code{-rdynamic} adds the code's symbols to the dynamic linking table to be available in dynamically linked binaries.
+                  \item \code[bash]{\$(realpath ./coverage.o)} includes the previously compiled object file in the linker sources. The linker will then override the weakly linked default implementation with the custom implementation found in this binary.
+              \end{itemize}
+    \end{itemize}
+
+    These steps produce binaries which behave exactly as produced by an unmodified compilation process, but have additional functionality statically compiled in, which records coverage information and makes it available through functions available in dynamically linked binaries.
+
     \subsubsection{Dynamic Interface}
     \subsection{Gathering Coverage Information from uutils coreutils}
     \subsection{Differential Fuzzing}
