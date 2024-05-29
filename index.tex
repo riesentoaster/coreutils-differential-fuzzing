@@ -265,6 +265,7 @@ __sanitizer_cov_trace_pc_guard(&guard_variable)
     However, these default implementations only work if the fuzzer and binary under test exist in the same process, i.e. when the fuzzer and source code to test are compiled into a single unit. Based on the reasoning in Section~\ref{CoreutilsBuildSystem}, this is not a feasible solution for this project. Hence, a different approach was created.
 
     \subsubsection{Instrumentation}
+    \label{CoverageInstrumentation}
 
     First, inspired by the simple default implementation provided in the documentation for \code{SanitizerCoverage}\cite{SanitizerCoverage}, a simple implementation for the required function is written where the map created by the pass in the tested binary is marked as the edges are executed. Then, additional exported functions are written which make the gathered information available to other parts of the binary. This file is then compiled to an object file.
 
@@ -278,14 +279,50 @@ __sanitizer_cov_trace_pc_guard(&guard_variable)
         \item For the linker (\code{LDFLAGS}):
               \begin{itemize}
                   \item \code{-rdynamic} adds the code's symbols to the dynamic linking table to be available in dynamically linked binaries.
-                  \item \code[bash]{\$(realpath ./coverage.o)} includes the previously compiled object file in the linker sources. The linker will then override the weakly linked default implementation with the custom implementation found in this binary.
+                  \item \code[bash]{\$(realpath ./coverage.o)} includes the previously compiled object file in the linker sources. The linker will then override the weakly linked default implementation with the custom implementation found in this binary. \code{realpath} has to be included since \code{make} will traverse subdirectories where the relative path is no longer correct.
               \end{itemize}
     \end{itemize}
 
     These steps produce binaries which behave exactly as produced by an unmodified compilation process, but have additional functionality statically compiled in, which records coverage information and makes it available through functions available in dynamically linked binaries.
 
     \subsubsection{Dynamic Interface}
+
+    In a next step, this functionality needs to be made accessible to the fuzzer. This is accomplished by building dynamic system libraries, which are passed to the loader using the \code{LD_PRELOAD} environment variable. They can hook into the execution process at multiple points to execute their logic. And, because the symbolic information is kept in the binaries under test, they can call the functions providing coverage data described in Section~\ref{CoverageInstrumentation}. In this project, two binaries are employed
+
+    \paragraph{Coverage Map Size Extraction}
+
+    The first of these hooks into \code{libc\_start\_main}, and instead of calling the binaries main function calculates the size of the memory map the coverage data is stored in and prints it to \code{stdout}. This can then be read by the fuzzer to allocate its own memory map of the same size. This binary is used only once at the beginning of a fuzzing campaign, since the map size does not change.
+
+    \paragraph{Coverage Extraction}
+
+    The second binary performs more complex logic:
+    \begin{enumerate}
+        \item Before the binary is ever called, the fuzzer allocates a shared memory map with the size as extracted by the method described above. The memory map needs to be available to child processes spawned by the fuzzer. To achieve this, \code{mmap} and \code{shm_open} based shared memory is used. Additionally, the \code{libc} flag \code{FD_CLOEXEC} needs to be unset to ensure access in the child process.
+        \item A LibAFL \code{ShmemDescription} of this memory map is then created. For \code{mmap} style memory maps, this contains a file descriptor and the size of the map. The descriptor is then serialized to a printable format.
+        \item The fuzzer only then calls the binary under test, with the second dynamic system library loaded using again \code{LD_PRELOAD}. Besides all arguments used in the fuzzing run, as a last argument it passes the serialized shared memory description.
+        \item The helper binary then deserializes the description and makes it available for later use.
+        \item It also changes \code{argc} and \code{argv} to remove the description.
+        \item With the changed arguments, it then calls \code{libc\_start\_main} of the binary to test.
+        \item The helper binary also adds a hook to one of the teardown functions of the process. Once this is called, it retrieves the access to the shared memory prepared as described above. It then uses one of the functions defined in the custom coverage information collection code to retrieve the coverage data from the current execution and copies it to the shared memory.
+        \item Once the process is done, the fuzzer continues with its analysis. And transparent to the rest of the fuzzer, as if done by the default modules in \code{libafl\_targets}, the coverage information can be found in the shared memory. It can then be analyzed with all the default \code{Observer}s and \code{Feedback}s.
+    \end{enumerate}
+
+    This entire process is transparent to the binary under test and the entire fuzzer except for the \code{Executor} and some code to set up the shared memory. This makes it very flexible to use, even in cases like this project, where more intrusive changes to the program under test are not feasible.
+
     \subsection{Gathering Coverage Information from uutils coreutils}
+
+    The approach to gathering coverage information from uutils' version of coreutils is similar to the one described above. Since Rust uses clang under the hood as well, the challenge is reduced to passing the compiler and linker flags in the correct way. Because direct access to \code{CLFAGS} and \code{LDFLAGS} is limited, only \code{CFLAGS="-g"} is passed this way. The remaining functionality is passed using \code{RUSTFLAGS}:
+
+    \begin{itemize}
+        \item \code{-Cpasses=sancov-module} is needed to enable the \code{SanitizerCoverage} pass
+        \item \lstinline[breaklines]{-Cllvm-args=-sanitizer-coverage-trace-pc-guard} sets the correct mode
+        \item \lstinline{-Cllvm-args=-sanitizer-coverage-level=3} has to be set manually here, where it is set to \code{3} automatically if clang is invoked manually
+        \item \code{-Clink-arg=-rdynamic} again keeps the symbol information in the final binary
+        \item \code{-Clink-arg=\$(realpath ./coverage.o)} passes the coverage file
+    \end{itemize}
+
+    The remaining steps including the helper binaries is the same as described with GNU's coreutils.
+
     \subsection{Differential Fuzzing}
     \subsubsection{Existing Functionality}
     \subsubsection{Custom Extensions}
