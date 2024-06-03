@@ -1,4 +1,5 @@
 % TODO: Add n.d. as year entry for bib entries that don't have a date. (Search for "()" in the PDF)
+% TODO: Fix page breaks before captions
 
 \documentclass{article}
 \usepackage[hidelinks]{hyperref}
@@ -7,10 +8,15 @@
 \usepackage{xcolor}
 \usepackage{graphicx}
 \usepackage{float}
+\usepackage{pgfplots}
+\usepgfplotslibrary{colorbrewer}
+\pgfplotsset{compat = 1.18} 
+\usetikzlibrary{pgfplots.statistics, pgfplots.colorbrewer} 
+\usepackage{pgfplotstable}
 \usepackage{listings}
 \lstset{
     backgroundcolor=\color[RGB]{240, 240, 240},   
-    basicstyle=\ttfamily,
+    basicstyle=\ttfamily\footnotesize,
     breakatwhitespace=false,
     breaklines=true,
     keepspaces=true,
@@ -20,7 +26,8 @@
     showstringspaces=false,
     showtabs=false,
     tabsize=4,
-    postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space}
+    postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+    aboveskip=10pt
 }
 \usepackage[
     backend=biber,
@@ -33,9 +40,16 @@
 \addbibresource{sources.bib}
 \usepackage{multicol}
 \setlength{\columnsep}{13mm}
+\usepackage{hypcap}
 \usepackage{caption}
-\captionsetup{justification=centerlast,font=small,labelfont=sc,margin=50pt}
-
+\captionsetup{
+    justification=centerlast,
+    font=small,
+    labelfont=sc,
+    margin=5pt,
+    belowskip=15pt
+}
+\DeclareCaptionType{listing}[Listing][List of Listings]
 
 \title{%
 \vspace{50px}%
@@ -57,7 +71,7 @@
 \DeclareFieldFormat*{citetitle}{\textit{#1}}
 \hfuzz=50px
 \hbadness=10000
-\newcommand{\code}[2][]{\lstinline[language=#1, breaklines=false]{#2}}
+\newcommand{\code}[2][]{\lstinline[language=#1, breaklines=false, basicstyle=\ttfamily\normalsize]{#2}}
 \let\savedCite=\cite
 \renewcommand{\cite}{\unskip~\savedCite}
 \let\savedRef=\ref
@@ -89,6 +103,7 @@
 \begin{multicols}{2}
     \section{Introduction}
     \subsection{Differential Fuzzing}
+    \label{IntroductionDifferentialFuzzing}
     \begin{itemize}
         \item Fuzzing has been popular and effective at finding bugs.
         \item Much research has gone into input selection/guiding.
@@ -205,6 +220,7 @@
     Finally, \code{Mutator}s take an \code{Input} and change it in some form. On simple byte array \code{Input}s, this may be flipping a bit, or injecting an additional byte somewhere. For more complex \code{Input}s, custom \code{Mutator}s may need to be written. All \code{Mutator}s included in a certain fuzzer are passed to a scheduler which mutates an \code{Input} once or multiple times with the received \code{Mutator}s. This is another example of the flexibility of LibAFL: While one may need to write custom \code{Mutator}s for a custom \code{Input} type, all scheduling algorithms available in LibAFL can be used regardless, without any additional changes.
 
     \section{Implementation}
+    \label{Implementation}
 
     This section introduces the concepts and technical details necessary to reproduce the findings of this work by incrementally adding capabilities to a fuzzer. The example fuzzer will target \code{base64}, a comparatively small program from the coreutils. It encodes and decodes binary data to a format consisting only of characters unproblematic in most contexts. It takes its input from either a file or \code{stdin} and provides the following options:
     \begin{itemize}
@@ -245,6 +261,7 @@
     \end{itemize}
 
     \subsection{Optimizations}
+    \label{Optimizations}
 
     This basic fuzzer can then be augmented by systems that LibAFL provide. With very little additional code, the fuzzer can be extended to run on all available cores or even multiple machines, use advanced algorithms to choose the best \code{Mutator}, etc. Additional \code{Observer}s and \code{Feedback}s, such as a \code{TimeoutFeedback} can be introduced with no additional configuration. This is where LibAFL as a framework simplifies building an advanced fuzzer significantly.
 
@@ -254,11 +271,13 @@
 
     \subsubsection{LibAFL's Coverage Interface}
 
-    LibAFL heavily relies on shared memory maps for a wide range of internal functionality like corpus synchronization across threads. It is further important for different kinds of \code{Feedback}, especially coverage information. Its built-in logic for adding coverage gathering instrumentation to a binary to test relies on passes in the clang compiler, specifically the \code{SanitizerCoverage}\cite{SanitizerCoverage} module. This module includes different levels of coverage instrumentation, the examples provided by LibAFL typically use \code{trace-pc-guard}. This will insert the following call at every edge:
+    LibAFL heavily relies on shared memory maps for a wide range of internal functionality like corpus synchronization across threads. It is further important for different kinds of \code{Feedback}, especially coverage information. Its built-in logic for adding coverage gathering instrumentation to a binary to test relies on passes in the clang compiler, specifically the \code{SanitizerCoverage}\cite{SanitizerCoverage} module. This module includes different levels of coverage instrumentation, the examples provided by LibAFL typically use \code{trace-pc-guard}. This will insert the call shown in Listing~\ref{listing:EdgeFunction} on every edge.
 
     \begin{lstlisting}[language=C]
 __sanitizer_cov_trace_pc_guard(&guard_variable)
-    \end{lstlisting}
+\end{lstlisting}
+    \captionof{listing}{Inserted Call on Every Edge}
+    \label{listing:EdgeFunction}
 
     The implementation of this function is then left for the developer.  The LibAFL module \code{libafl\_targets} provides such implementations which allocate a shared memory map with the correct size and then on the execution of each edge marks the memory section associated with it. Finally, a \code{MaxMapFeedback} is used as feedback in the fuzzer, which makes the fuzzer prioritize inputs that visited new paths in the binary under test, since additional bits are set in the shared memory map.
 
@@ -315,8 +334,8 @@ __sanitizer_cov_trace_pc_guard(&guard_variable)
 
     \begin{itemize}
         \item \code{-Cpasses=sancov-module} is needed to enable the \code{SanitizerCoverage} pass
-        \item \lstinline[breaklines]{-Cllvm-args=-sanitizer-coverage-trace-pc-guard} sets the correct mode
-        \item \lstinline{-Cllvm-args=-sanitizer-coverage-level=3} has to be set manually here, where it is set to \code{3} automatically if clang is invoked manually
+        \item \lstinline[breaklines, basicstyle=\ttfamily\normalsize]{-Cllvm-args=-sanitizer-coverage-trace-pc-guard} sets the correct mode
+        \item \code{-Cllvm-args=-sanitizer-coverage-level=3} has to be set manually here, where it is set to \code{3} automatically if clang is invoked manually
         \item \code{-Clink-arg=-rdynamic} again keeps the symbol information in the final binary
         \item \code{-Clink-arg=\$(realpath ./coverage.o)} passes the coverage file
     \end{itemize}
@@ -324,25 +343,140 @@ __sanitizer_cov_trace_pc_guard(&guard_variable)
     The remaining steps including the helper binaries is the same as described with GNU's coreutils.
 
     \subsection{Differential Fuzzing}
-    \subsubsection{Existing Functionality}
-    \subsubsection{Custom Extensions}
+
+    As introduced in Section~\ref{IntroductionDifferentialFuzzing}, differential fuzzing describes an advancement in oracle development. It executes different implementations of the same logic and compares their outputs. Typical oracles define fixed logic to determine if a certain execution should be considered a solution. Typical oracles for this are simple but unspecific (i.e. producing false negatives), like checks for crashes or timeouts. Simple heuristic checks for logic consistency between input and output of a program under test suffer from either a significant false negative or false positive rate.
+
+    To check the full logic, one would essentially need a second reference implementation of the program under test. The fuzzer can then simply check the outputs of the programs for differences. While this obviously cannot find an error if it is present in all implementations, many bugs can still be detected.
+
+    However, creating such reference implementations is not feasible for fuzzing alone. Therefore, differential fuzzing is almost exclusively performed when multiple implementations of the same logic are already present. Section~\ref{StateOfTheArt} presents relevant such works.
+
+    \subsubsection{Existing Functionality and Custom Extensions}
+
+    LibAFL includes certain existing functionality for differential fuzzing, including
+    \begin{itemize}
+        \item \code{DiffExecutor}, which takes two other \code{Executor}s which are then used to perform the actual executions and whose \code{ExitKind}s (very coarse exit reason distinction, specifically \code{Ok}, \code{Crash}, or \code{Timeout}) are compared
+        \item \code{DifferentialObserver}, a trait for \code{Observer}s to pass to the \code{DiffExecutor}, including some implementations, such as for \code{StdMapObserver}, and
+        \item a very simple example fuzzer performing differential fuzzing and showing the usage of the above.
+    \end{itemize}
+
+    Based on the already existing code, only two additional \code{Feedback}s were required:
+
+    \begin{itemize}
+        \item \code{DiffExitKindFeedback} checks if the \code{ExitKind}s of the two \code{Executor}s in the \code{DiffExecutor} were different and builds on functionality in \code{DiffExecutor}. This addition was submitted to the upstream project by the author and has already been accepted. Refer to Section~\ref{Contributions} for a complete list of the contributions to LibAFL based on this project.
+        \item \code{DiffStdIOMetadataPseudoFeedback} is necessary to extract vital information about differences in \code{stdout} and \code{stderr} between the two binaries tested into the logged error case.
+    \end{itemize}
 
     \section{Results}
+
+    Unfortunately, LibAFL's binary data \code{Mutator}s' interface made it so that only one part of the \code{Input} could be altered by them. While a lengthy discussion about this limitation lead to significant improvements including a clear path to a more flexible solution, the necessary changes were not introduced in time to be considered in this project. Because of this, the evaluation of the produced fuzzer can only be done in a rather limited fashion.
+
+    As an example of a program from the different implementations of coreutils that only consists of one binary \code{Input} part, \code{base64} was selected as an evaluation target. Refer to Section~\ref{Implementation} for an explanation of its functionality.
+
+    \subsection{Different Behavior Declared Consistent}
+
+    uutils' website claims that \textquote{Differences with GNU are treated as bugs}\cite{UutilsCoreUtils}. However, this seems to only hold for information written to \code{stdout}. If an invalid command is issued, the version of the program under test by uutils returns additional information, such as a usage tip. Listings~\ref{listing:ErrorIllegalFlagGNU} and~\ref{listing:ErrorIllegalFlaguutils} show the differences in error message when passing an illegal argument.
+
+    \begin{lstlisting}
+$ gnu-base64 --invalid-flag
+gnu-base64: unrecognized option '--invalid-flag'
+Try 'gnu-base64 --help' for more information.
+\end{lstlisting}
+    \captionof{listing}{Error Message When Passing an Illegal Flag to GNU's Version of Coreutils}
+    \label{listing:ErrorIllegalFlagGNU}
+
+    \begin{lstlisting}
+$ uutils-base64 --invalid-flag
+error: unexpected argument '--invalid-flag' found
+
+  tip: to pass '--invalid-flag' as a value, use '-- --invalid-flag'
+
+Usage: uutils-base64 [OPTION]... [FILE]
+
+For more information, try '--help'.
+\end{lstlisting}
+    \captionof{listing}{Error Message When Passing an Illegal Flag to uutils's Version of Coreutils}
+    \label{listing:ErrorIllegalFlaguutils}
+
+    Because of this, in its differential mode, the fuzzer reduces the information from the \code{stderr} of each process to a check for \textit{any} output. It reports an error, if either one implementation returns any data on \code{stderr} and the other does not, or if both do not print any data to \code{stderr}, but print different data to \code{stdout}.
+
+    The latter restriction is required because of implementation details: In \code{base64}, GNU's version prints valid bytes during the decoding process and, once it encounters invalid data, prints an error message. uutils' version on the other hand first parses the entire input and only then prints the output or error message. An example output can be seen in Listings~\ref{listing:ErrorPartialOutputGNU} and~\ref{listing:ErrorPartialOutputuutils}.
+
+    \begin{lstlisting}
+$ echo "aa" | gnu-base64 --decode
+ignu-base64: invalid input
+\end{lstlisting}
+    \captionof{listing}{Error Message Including Partial Output (leading \code{i}) from GNU's \code{base64}}
+    \label{listing:ErrorPartialOutputGNU}
+
+    \begin{lstlisting}
+$ echo "aa" | uutils-base64 --decode
+uutils-base64: error: invalid input
+\end{lstlisting}
+    \captionof{listing}{Error Message Without Partial Output from uutils' \code{base64}}
+    \label{listing:ErrorPartialOutputuutils}
+
+    Finally, the option printing the version (aptly named \code{--version}) obviously prints different information. Similarly, \code{--help} prints different text, since it includes the file path. These options are unlikely to introduce business logic error because of their simplicity and are thus both disregarded in this project.
+
     \subsection{Performance}
-    \subsection{Evaluation on base64}
+
+    Across 64 fully loaded cores of an AMD EPYC 7713 with 64~GB of RAM, the complete fuzzer in its differential fuzzing modes achieves approximately 1500 executions per second. According to the fuzzer, only 3.405\% of edge coverage is reached.
+
+    To gather additional information about this number, the GNU coreutils were additionally compiled with instrumentation for coverage analysis with \code{gcov}. The fuzzer was then instructed to execute \code{Input}s, that reached new edges on this version of the program under test. This is accomplished by introducing a new \code{Feedback}, which can be attached to the \code{MaxMapFeedback} using boolean logic operators in a way it is only evaluated when the \code{MaxMapFeedback} considers the \code{Input} interesting. This new \code{Feedback} returns a constant interestingness and simply runs the \code{gcov} instrumented binary with the current \code{Input}. This results in only 1690 executions on an evaluation run with millions of executions on the binaries under test, thus introducing negligible performance overhead.
+
+    Analysis of the results reported by \code{gcov} shows that 62.26\% of 212 lines were executed. Manual inspection of the coverage file showed that the missing lines either consist of \code{stdio} error handling code (e.g. write operations to \code{stdout}, which should never fail, since pipes aren't intentionally broken by the fuzzer) and code for the \code{--version} and \code{--help} flags.
+
+    \subsubsection{Advanced LibAFL Modules}
+
+    Section~\ref{Optimizations} introduced how LibAFL simplifies introducing advanced algorithms for \code{Input} for \code{Mutator} selection. Figure~\ref{fig:coverage_time} shows how introducing two of these changes the performance of the fuzzer. For this experiment, each configuration is run ten times until the maximum achievable coverage is reached and the runtime according to LibAFL is recorded. On average, it took the fuzzer 95.5~s to explore all reachable edges.
+
+    In a second step, a \code{StdWeightedScheduler} is introduced. This is LibAFL's implementation of the algorithm introduced by AFLFast\cite{AFLFast} and explores low-frequency paths using a Markov chain model using a power schedule based on energy calculated for each input. In comparison, the \code{StdScheduler} picks a random \code{Input} from the corpus to mutate next. Introducing this improvement effectively reduces variability and the average runtime to 74.3~s, mostly by eliminating outliers with a high runtime.
+
+    Finally, the basic \code{StdScheduledMutator} is replaced by \code{StdMOptMutator}. While the former picks a random number of random mutators to call, the latter calculates the mutator most likely to find improvements by employing particle swarm optimizations, as introduced in MOPT\cite{MOPT}. This introduces a calculation overhead which outweighs gains by improved \code{Mutator} selection, as visible in Figure~\ref{fig:coverage_time}. This tradeoff may change with increased program length and complexity. The execution speed reported by the fuzzer approached and equaled the same level, regardless of the specific optimization level used, after a few minutes.
+
+    \begin{center}
+        \begin{tikzpicture}
+            \begin{axis}[
+                    boxplot/draw direction = y,
+                    axis x line* = bottom,
+                    axis y line = left,
+                    enlarge y limits,
+                    ymajorgrids,
+                    xtick = {1, 2, 3},
+                    xticklabels = {
+                            Baseline,
+                            \lstinline[basicstyle=\ttfamily\footnotesize]{StdWeightedScheduler},
+                            \lstinline[basicstyle=\ttfamily\footnotesize]{StdMOptMutator}
+                        },
+                    xticklabel style = {align=center, font=\small, rotate=60},
+                    xtick style = {draw=none},
+                    ylabel = {Time (s)},
+                    ytick = {0, 60, 120, 180, 240},
+                    width = \columnwidth,
+                ]
+                \addplot+[boxplot, fill, draw=black] table[row sep=\\,y index=0] { 230\\ 56\\ 61\\ 82\\ 64\\ 56\\ 66\\ 157\\ 75\\ 106\\ };
+                \addplot+[boxplot, fill, draw=black] table[row sep=\\,y index=0] { 91\\ 62\\ 70\\ 85\\ 108\\ 76\\ 82\\ 47\\ 53\\ 69\\ };
+                \addplot+[boxplot, fill, draw=black] table[row sep=\\,y index=0] { 90\\ 104\\ 197\\ 78\\ 133\\ 66\\ 205\\ 49\\ 60\\ 51\\ };
+            \end{axis}
+        \end{tikzpicture}
+        \captionof{figure}{Time to Reach the Maximum Coverage on \code{base64} Across Advanced LibAFL Modules}
+        \label{fig:coverage_time}
+    \end{center}
+
+    \subsection{Performance on Individual Implementations}
 
     \section{Discussion}
     \subsection{Research Questions}
     \subsection{Contributions}
+    \label{Contributions}
     \subsection{Limitations}
     \subsubsection{Untested Program Parts}
     Docker etc.? — Would not only need to protect the environment but also record changes for differential fuzzing.
-
 
     \subsection{Future Work}
     \subsection{Summary}
 
     \section{State of the Art}
+    \label{StateOfTheArt}
     \subsection{Fuzzing coreutils}
     \subsubsection{Concolic Execution Frameworks}
     \subsubsection{Other approaches}
