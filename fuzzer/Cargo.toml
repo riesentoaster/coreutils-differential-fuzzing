@@ -1,0 +1,30 @@
+[package]
+name = "coreutils_differential"
+version = "0.1.0"
+authors = ["Valentin Huber <contact@valentinhuber.me"]
+edition = "2021"
+license = "MIT"
+
+[workspace]
+members = ["get_guard_num", "setup_guard_redirection"]
+
+[profile.release]
+# lto = true
+# codegen-units = 1
+# opt-level = 3
+debug = true
+
+[features]
+default = ["differential"]
+gnu = []
+uutils = []
+differential = ["gnu", "uutils"]
+tui = []
+introspection = ["libafl/scalability_introspection", "libafl/introspection"]
+
+[dependencies]
+libafl = { path = "../LibAFL/libafl/", features = ["cli", "errors_backtrace"] }
+libafl_bolts = { path = "../LibAFL/libafl_bolts/" }
+libc = "0.2"
+serde = { version = "1.0.199", features = ["derive"] }
+serde_json = "1.0.116"

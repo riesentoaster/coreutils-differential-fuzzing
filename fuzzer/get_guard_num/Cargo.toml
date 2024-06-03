@@ -1,0 +1,13 @@
+[package]
+name = "get_guard_num"
+version = "0.1.0"
+authors = ["Valentin Huber <contact@valentinhuber.me"]
+edition = "2021"
+license = "MIT"
+
+[lib]
+name = "get_guard_num"
+crate_type = ["cdylib"]
+
+[dependencies]
+libc = "0.2"

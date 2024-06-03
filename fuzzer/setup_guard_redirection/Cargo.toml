@@ -1,0 +1,18 @@
+[package]
+name = "setup_guard_redirection"
+version = "0.1.0"
+authors = ["Valentin Huber <contact@valentinhuber.me"]
+edition = "2021"
+license = "MIT"
+
+[lib]
+name = "setup_guard_redirection"
+crate_type = ["cdylib"]
+
+[dependencies]
+libafl_targets = { path = "../../LibAFL/libafl_targets", features = [
+    "sancov_pcguard_edges",
+] }
+libafl_bolts = { path = "../../LibAFL/libafl_bolts/" }
+libc = "0.2"
+serde_json = "1.0.116"

@@ -1,0 +1,174 @@
+[config]
+# make sure the commands are not executed in the sub-workspaces
+default_to_workspace = false
+
+[env]
+CARGO_TARGET_DIR = "target"
+PROFILE = "release"
+PROFILE_DIR = "release"
+COREUTILS_VERSION = "9.5"
+
+[tasks.create_target_dir]
+script_runner = "@shell"
+condition = { files_not_exist = ["./${CARGO_TARGET_DIR}"] }
+script = '''
+mkdir -p "${CARGO_TARGET_DIR}"
+'''
+
+[tasks.coverage_collector]
+condition = { files_not_exist = ["./${CARGO_TARGET_DIR}/coverage.o"] }
+dependencies = ["create_target_dir"]
+script_runner = "@shell"
+script = '''
+clang -c -o "./${CARGO_TARGET_DIR}/coverage.o" coverage.c
+'''
+
+[tasks.gnu_coreutils]
+condition = { files_not_exist = [
+    "./${CARGO_TARGET_DIR}/GNU_coreutils/Makefile",
+] }
+dependencies = [
+    "coverage_collector",
+    "create_target_dir",
+    "gnu_coreutils_coverage",
+]
+script_runner = "@shell"
+script = '''
+cd "./${CARGO_TARGET_DIR}"
+wget "http://ftp.gnu.org/gnu/coreutils/coreutils-${COREUTILS_VERSION}.tar.gz"
+tar -xzf "coreutils-${COREUTILS_VERSION}.tar.gz"
+rm "coreutils-${COREUTILS_VERSION}.tar.gz"
+mv -f "coreutils-${COREUTILS_VERSION}" GNU_coreutils
+
+# absolute path because build system traverses into subdirectories
+COVERAGE_FILE=$(realpath "./coverage.o")
+
+cd ./GNU_coreutils
+
+export CC="clang"
+export CFLAGS="-g -O2 -fsanitize-coverage=trace-pc-guard"
+export LDFLAGS="-rdynamic ${COVERAGE_FILE}"
+
+./configure CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
+make 
+'''
+
+[tasks.gnu_coreutils_coverage]
+condition = { files_not_exist = [
+    "./${CARGO_TARGET_DIR}/GNU_coreutils_coverage/Makefile",
+] }
+dependencies = ["create_target_dir"]
+script_runner = "@shell"
+script = '''
+cd "./${CARGO_TARGET_DIR}"
+wget "http://ftp.gnu.org/gnu/coreutils/coreutils-${COREUTILS_VERSION}.tar.gz"
+tar -xzf "coreutils-${COREUTILS_VERSION}.tar.gz"
+rm "coreutils-${COREUTILS_VERSION}.tar.gz"
+mv -f "coreutils-${COREUTILS_VERSION}" GNU_coreutils_coverage
+
+# absolute path because build system traverses into subdirectories
+COVERAGE_FILE=$(realpath "./coverage.o")
+
+cd ./GNU_coreutils_coverage
+CFLAGS="--coverage" ./configure
+make
+'''
+
+[tasks.uutils_coreutils]
+script_runner = "@shell"
+condition = { files_not_exist = [
+    "./${CARGO_TARGET_DIR}/uutils_coreutils/target/release/coreutils",
+] }
+dependencies = ["coverage_collector", "create_target_dir"]
+script = '''
+cd "./${CARGO_TARGET_DIR}"
+git clone https://github.com/uutils/coreutils
+mv coreutils uutils_coreutils
+
+# absolute path because build system traverses into subdirectories
+COVERAGE_FILE=$(realpath "./coverage.o")
+
+cd ./uutils_coreutils
+
+export CFLAGS="-g"
+export RUSTFLAGS=" \
+    -Cpasses=sancov-module \
+    -Cllvm-args=-sanitizer-coverage-level=3 \
+    -Cllvm-args=-sanitizer-coverage-trace-pc-guard \
+    -Clink-arg=-rdynamic \
+    -Clink-arg=${COVERAGE_FILE}"
+
+export PROFILE="release"
+
+make
+'''
+
+[tasks.coreutils]
+dependencies = ["gnu_coreutils", "uutils_coreutils"]
+
+[tasks.get_guard_num]
+script_runner = "@shell"
+script = '''
+cargo build --profile ${PROFILE} --package get_guard_num
+'''
+
+[tasks.setup_guard_redirection]
+script_runner = "@shell"
+script = '''
+cargo build --profile ${PROFILE} --package setup_guard_redirection
+'''
+
+[tasks.preloads]
+dependencies = ["get_guard_num", "setup_guard_redirection"]
+
+[tasks.fuzzer]
+dependencies = ["coreutils", "preloads"]
+script_runner = "@shell"
+script = '''
+cargo build --profile ${PROFILE}
+'''
+
+[tasks.fuzzer_gnu]
+dependencies = ["GNU_coreutils", "preloads"]
+script_runner = "@shell"
+script = '''
+cargo build --profile ${PROFILE} --no-default-features --features gnu
+'''
+
+[tasks.fuzzer_uutils]
+dependencies = ["uutils_coreutils", "preloads"]
+script_runner = "@shell"
+script = '''
+cargo build --profile ${PROFILE} --no-default-features --features uutils
+'''
+
+[tasks.clear_gcov_coverage]
+dependencies = ["gnu_coreutils_coverage"]
+script_runner = "@shell"
+script = '''
+rm -f ./*.gcov
+rm -f ./**/*.gcov
+rm -f ./${CARGO_TARGET_DIR}/GNU_coreutils_coverage/*.gcda
+rm -f ./${CARGO_TARGET_DIR}/GNU_coreutils_coverage/**/*.gcda
+'''
+
+[tasks.run]
+dependencies = ["fuzzer", "clear_gcov_coverage"]
+script_runner = "@shell"
+script = '''
+./${CARGO_TARGET_DIR}/${PROFILE_DIR}/coreutils_differential --output crashes --stdout out.log ${@}
+'''
+
+[tasks.run_gnu]
+dependencies = ["fuzzer_gnu", "clear_gcov_coverage"]
+script_runner = "@shell"
+script = '''
+./${CARGO_TARGET_DIR}/${PROFILE_DIR}/coreutils_differential --output crashes --stdout out.log ${@}
+'''
+
+[tasks.run_uutils]
+dependencies = ["fuzzer_uutils"]
+script_runner = "@shell"
+script = '''
+./${CARGO_TARGET_DIR}/${PROFILE_DIR}/coreutils_differential --output crashes --stdout out.log ${@}
+'''
