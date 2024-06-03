@@ -125,6 +125,7 @@
     \end{itemize}
 
     \subsection{Research Questions}
+    \label{ResearchQuestions}
     \begin{enumerate}
         \item Which parts of coreutils can be fuzzed? What performance tradeoffs does each part introduce?
         \item How can the necessary instrumentation be introduced into coreutils? What are the engineering and performance implications of each option?
@@ -135,6 +136,9 @@
     \end{enumerate}
 
     \section{Background}
+
+    To understand the requirements to and the architecture of the fuzzer, some background information on coreutils and LibAFL's architecture are necessary. This section provides an overview of these topics.
+
     \subsection{coreutils}
 
     On \citedate{FileUtilsAnnouncement}, {\DeclareNameAlias{labelname}{given-family}\citeauthor{FileUtilsAnnouncement}} announced fileutils, a suite of utilities for reading and altering files\cite{FileUtilsAnnouncement}. A year later, he released textutils (to parse and manipulate text)\cite{TextUtilsAnnouncement} and shellutils (to write powerful shell scripts)\cite{ShellUtilsAnnouncement}. These three collections were folded into one on \citedate{CoreUtilsAnnouncement}, called the GNU coreutils.\cite{CoreUtilsAnnouncement} \code{ls}, \code{cat}, \code{base64}, \code{grep}, \code{env}, or \code{whoami}: GNU's coreutils are at the basis of how users interact with most Linux distributions on the command line.\cite{GNULinux} Because they are so widely used and central to how users interact with their computers, software quality and lack of software defects is especially important to coreutils.
@@ -248,6 +252,7 @@
     \end{enumerate}
 
     \subsubsection{Custom Input Type}
+    \label{CustomInputType}
 
     This approach requires restricting the fuzzer to only execute whitelisted parts of the program under test, specifically to only add certain command line arguments. This also means that certain parts of the command line argument parsing routines will never get tested, since only valid command line arguments will be tested. The associated data to a certain flag (see Section~\ref{CoreutilsInterface}) may still be invalid and the corresponding parsing routine will be tested.
 
@@ -266,10 +271,12 @@
     This basic fuzzer can then be augmented by systems that LibAFL provide. With very little additional code, the fuzzer can be extended to run on all available cores or even multiple machines, use advanced algorithms to choose the best \code{Mutator}, etc. Additional \code{Observer}s and \code{Feedback}s, such as a \code{TimeoutFeedback} can be introduced with no additional configuration. This is where LibAFL as a framework simplifies building an advanced fuzzer significantly.
 
     \subsection{Gathering Coverage Information from GNU coreutils}
+    \label{CoverageGNU}
 
     To test any non surface level code, the fuzzer needs information of some form about what parts of the binary just got executed. This coverage information can fundamentally be gathered in two ways: Either the necessary logic is compiled into the binary, or it is added dynamically. While the former is more performant, it also requires changes to the binary. And as described in Section~\ref{CoreutilsBuildSystem}, making changes to the code or build system of GNU coreutils is a complex task. Previous experiments by the author on coreutils showed that in principle, adding compile-time coverage-gathering instrumentation is possible.\cite{VT1}
 
     \subsubsection{LibAFL's Coverage Interface}
+    \label{LibAFLCoverageInterface}
 
     LibAFL heavily relies on shared memory maps for a wide range of internal functionality like corpus synchronization across threads. It is further important for different kinds of \code{Feedback}, especially coverage information. Its built-in logic for adding coverage gathering instrumentation to a binary to test relies on passes in the clang compiler, specifically the \code{SanitizerCoverage}\cite{SanitizerCoverage} module. This module includes different levels of coverage instrumentation, the examples provided by LibAFL typically use \code{trace-pc-guard}. This will insert the call shown in Listing~\ref{listing:EdgeFunction} on every edge.
 
@@ -329,6 +336,7 @@ __sanitizer_cov_trace_pc_guard(&guard_variable)
     This entire process is transparent to the binary under test and the entire fuzzer except for the \code{Executor} and some code to set up the shared memory. This makes it very flexible to use, even in cases like this project, where more intrusive changes to the program under test are not feasible.
 
     \subsection{Gathering Coverage Information from uutils coreutils}
+    \label{Coverageuutils}
 
     The approach to gathering coverage information from uutils' version of coreutils is similar to the one described above. Since Rust uses clang under the hood as well, the challenge is reduced to passing the compiler and linker flags in the correct way. Because direct access to \code{CLFAGS} and \code{LDFLAGS} is limited, only \code{CFLAGS="-g"} is passed this way. The remaining functionality is passed using \code{RUSTFLAGS}:
 
@@ -343,6 +351,7 @@ __sanitizer_cov_trace_pc_guard(&guard_variable)
     The remaining steps including the helper binaries is the same as described with GNU's coreutils.
 
     \subsection{Differential Fuzzing}
+    \label{DifferentialFuzzing}
 
     As introduced in Section~\ref{IntroductionDifferentialFuzzing}, differential fuzzing describes an advancement in oracle development. It executes different implementations of the same logic and compares their outputs. Typical oracles define fixed logic to determine if a certain execution should be considered a solution. Typical oracles for this are simple but unspecific (i.e. producing false negatives), like checks for crashes or timeouts. Simple heuristic checks for logic consistency between input and output of a program under test suffer from either a significant false negative or false positive rate.
 
@@ -351,6 +360,7 @@ __sanitizer_cov_trace_pc_guard(&guard_variable)
     However, creating such reference implementations is not feasible for fuzzing alone. Therefore, differential fuzzing is almost exclusively performed when multiple implementations of the same logic are already present. Section~\ref{StateOfTheArt} presents relevant such works.
 
     \subsubsection{Existing Functionality and Custom Extensions}
+    \label{DifferentialFuzzingCode}
 
     LibAFL includes certain existing functionality for differential fuzzing, including
     \begin{itemize}
@@ -367,6 +377,7 @@ __sanitizer_cov_trace_pc_guard(&guard_variable)
     \end{itemize}
 
     \section{Results}
+    \label{Results}
 
     Unfortunately, LibAFL's binary data \code{Mutator}s' interface made it so that only one part of the \code{Input} could be altered by them. While a lengthy discussion about this limitation lead to significant improvements including a clear path to a more flexible solution, the necessary changes were not introduced in time to be considered in this project. Because of this, the evaluation of the produced fuzzer can only be done in a rather limited fashion.
 
@@ -426,6 +437,7 @@ uutils-base64: error: invalid input
     Analysis of the results reported by \code{gcov} shows that 62.26\% of 212 lines were executed. Manual inspection of the coverage file showed that the missing lines either consist of \code{stdio} error handling code (e.g. write operations to \code{stdout}, which should never fail, since pipes aren't intentionally broken by the fuzzer) and code for the \code{--version} and \code{--help} flags.
 
     \subsubsection{Advanced LibAFL Modules}
+    \label{AdvancedLibAFLModules}
 
     Section~\ref{Optimizations} introduced how LibAFL simplifies introducing advanced algorithms for \code{Input} for \code{Mutator} selection. Figure~\ref{fig:coverage_time} shows how introducing two of these changes the performance of the fuzzer. For this experiment, each configuration is run ten times until the maximum achievable coverage is reached and the runtime according to LibAFL is recorded. On average, it took the fuzzer 95.5~s to explore all reachable edges.
 
@@ -463,17 +475,69 @@ uutils-base64: error: invalid input
     \end{center}
 
     \subsection{Performance on Individual Implementations}
+    \label{IndividualFuzzers}
+
+    \subsection{Discovered Errors}
+    \label{Errors}
 
     \section{Discussion}
+
     \subsection{Research Questions}
+    \label{ResearchQuestionsDiscussion}
+    Section~\ref{ResearchQuestions} introduced a series of questions to be answered in this work. Here is a summary of what was found.
+
+    In principle, everything in coreutils can be tested by a fuzzer. However, based on the interface information in Section~\ref{CoreutilsInterface} and the considerations on environment protection in Section~\ref{Environment}, a fuzzer whose goal complete coverage is needs to introduce a computationally expensive layer to record environmental changes and prevent their persistence across executions of the program under test. Additionally, a layer to emulate failing system interactions (such as broken pipes) needs to be introduces. The performance cost of these layers make them infeasible to use in testing without large compute resources. Additionally, as was shown in Section~\ref{Errors}, even a fuzzer without these capabilities can find software defects and is thus worth pursuing.
+
+    This work further introduces a novel approach to LibAFL to gather coverage information from a binary called in a child process. Sections~\ref{CoverageGNU} and~\ref{Coverageuutils} describe how edge coverage is gathered by logic statically compiled into the binary under test and extracted by dynamically loaded libraries, transparent to the program under test.
+
+    The fuzzer built in this project makes extensive use of LibAFL's features, including idiomatic usage of LibAFL's internal representation of coverage information (see Section~\ref{LibAFLCoverageInterface}), usage of advanced algorithms as provided by LibAFL (see Section~\ref{Optimizations} and~\ref{AdvancedLibAFLModules}), and experiments on custom \code{Input} types (as described in Section~\ref{CustomInputType} and discussed in Section~\ref{CustomInputTypeLimitations}).
+
+    A non-differential fuzzer can only find bugs that trigger states that are easily distinguishable from normal operation. Section~\ref{DifferentialFuzzing} explains why this in practice reduces the discoverable errors to those that either crash the program under test or produce timeouts. Section~\ref{IndividualFuzzers} shows that even long evaluation runs on \code{base64} did not discover any such bugs.
+
+    Section~\ref{DifferentialFuzzingCode} lists existing functionality in LibAFL used in the fuzzer in its differential mode, along with custom extensions introduced during this project. Because of LibAFL's modular design, running two \code{Executor}s in parallel, including all their respective \code{Observer}s, and introducing \code{Feedback}s comparing their output is not only possible but becomes an engineering task of limited difficulty.
+
+    Finally, the fuzzer in its differential mode finds nontrivial logic errors in the different implementations, undiscoverable by its non-differential mode. It explores all program parts except for those excluded based on environmental protection reasons as described above.
+
     \subsection{Contributions}
     \label{Contributions}
-    \subsection{Limitations}
-    \subsubsection{Untested Program Parts}
-    Docker etc.? — Would not only need to protect the environment but also record changes for differential fuzzing.
 
-    \subsection{Future Work}
+    During this project, several improvements to LibAFL's upstream repository have been introduced:
+
+    \begin{itemize}
+        \item \code{CommandExecutor} was generalized to work on custom \code{Input}s, rather than simple byte array \code{Input}s only (\href{https://github.com/AFLplusplus/LibAFL/pull/2129}{PR~\#2129})
+        \item Improvements to \code{StdOutObserver} and \code{StdErrObserver} (\href{https://github.com/AFLplusplus/LibAFL/pull/2236}{PR~\#2236})
+        \item Introduction of \code{DiffExitKindFeedback}, which compares the \code{ExitKind} of two \code{Executor}s in differential fuzzing and reports discrepancies (\href{https://github.com/AFLplusplus/LibAFL/pull/2246}{PR~\#2246})
+    \end{itemize}
+
+    Based on feedback by the author of this work, the following changes were introduced by LibAFL's maintainers:
+
+    \begin{itemize}
+        \item Architectural improvements on handling of \code{StdOutObserver} and \code{StdErrObserver}
+        \item Work on \code{tuple_list} and moving from \code{HasBytesArray} to \code{HasMutatorBytes}, in preparation of introducing \code{MappingMutator} to allow byte array mutation based on default \code{Mutator}s on arbitrary parts of a custom \code{Input}
+    \end{itemize}
+
+    Further improvements were discussed but could not yet be introduced because of time limitations, but may be in the coming months:
+
+    \begin{itemize}
+        \item \code{MappingMutator} as described above, including an example fuzzer showing handling of custom \code{Input}s
+        \item A \code{CommandExecutor} implementation for custom \code{Input}s, where the mapping of \code{Input} parts to the different parts of the command is defined on the \code{Input} based on a trait
+        \item A set of macros to automatically generate the mutators necessary for a custom \code{Input}
+        \item An example fuzzer including possible further additions to LibAFL's source code to show how coverage information can be retrieved when using \code{CommandExecutor}, as done in this project
+    \end{itemize}
+
+    \subsection{Limitations and Future Work}
+
+    While the fuzzer as introduced in the previous sections was already able to produce results in the form of prove-of-concept work and found bugs, it still has some limitations.
+
+    \subsubsection{Untested Program Parts}
+    Sections~\ref{CoreutilsInterface} and~\ref{ResearchQuestionsDiscussion} discuss how the fuzzer is limited to functionality that does not change the environment. Additionally, code handling errors in the programs input and output (e.g. broken pipes) is not tested because of a missing intermediate layer artificially introducing these errors. Future projects may introduce these missing layers either individually or combined to test the code sections not tested by this project.
+
+    \subsubsection{Limitations on Custom Input Type Mutations}
+    \label{CustomInputTypeLimitations}
+    Section~\ref{Results} explains why the evaluation of the fuzzer was only performed on \code{base64}. After the missing additions described in Section~\ref{Contributions}, specifically \code{MappingMutator} to mutate multiple byte array parts of a custom \code{Input} type, are introduced, a more complete evaluation will be possible.
+
     \subsection{Summary}
+
 
     \section{State of the Art}
     \label{StateOfTheArt}
