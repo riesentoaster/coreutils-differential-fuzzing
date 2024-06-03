@@ -102,30 +102,32 @@
 
 \begin{multicols}{2}
     \section{Introduction}
+
+    Fuzz testing has developed into an important tool for finding software defects. By repeatedly running a program under test with varied input data and detecting illegal states such as crashes, it is an automated alternative to manual security and reliability testing. Introduced in \citeyear{UNIX} in the seminal work by \citeauthor{UNIX}\cite{UNIX}, it is now widely used in industry. Companies such as Google, Microsoft, Cisco, or Adobe and governmental agencies such as the US Department of Defense have developed proprietary fuzzers or contributed to open source fuzzers. Fuzz testing has proven an effective tool for both security and reliability testing. Its accolades include, among others, 20,000 discovered vulnerabilities in Google's Chrome browser alone.\cite{Demystifying}
+
     \subsection{Differential Fuzzing}
     \label{IntroductionDifferentialFuzzing}
-    \begin{itemize}
-        \item Fuzzing has been popular and effective at finding bugs.
-        \item Much research has gone into input selection/guiding.
-        \item Not much has been done when it comes to oracles.
-        \item Differential Fuzzing: What it is.
-    \end{itemize}
+
+    While extensive research has been conducting on fuzzing, one field which has not received a lot of attention is the oracle which defines what an illegal state of the program under test constitutes. While simple oracles such as program crashes and timeouts are easy to detect, further exploration has not gone past very general logic, such as memory-violation bugs.\cite{SurveyRoadmap}
+
+    One such oracle is what is used in so-called differential fuzzing. It relies on two independent implementations of the same underlying program logic and works by comparing their output under the same input. Compared to other common and more general oracles, this allows detecting logic errors that do not invalidate basic guardrails such as memory access rules.
 
     \subsection{coreutils}
-    \begin{itemize}
-        \item Short overview
-        \item uutils' version
-    \end{itemize}
+
+    This work will examine coreutils as an example of a target to perform differential fuzzing on. coreutils are a suite of programs that allow users to interact with their system on the command line. Popularized by the version developed by the GNU project and available on almost all current Linux systems, utilities such as \code{ls}, \code{cat}, \code{base64}, \code{grep}, \code{env}, or \code{whoami} are indispensible tools for many users' daily workflows. Section~\ref{Coreutils} will provide a more in-depth introduction to coreutils along with information about its history, interface and technical build-up.
 
     \subsection{LibAFL}
     \label{LibAFLHistory}
-    \begin{itemize}
-        \item History of AFL/AFL++
-        \item Problems with incompatible forks and how LibAFL attempts to fix them
-    \end{itemize}
+
+    American Fuzzy Lop (AFL)\cite{AFL} was one early comprehensive open-source fuzzing tool used in countless projects and academic works to detect an impressive list of software defects and security vulnerabilities\cite{AFLBugs}. After it was no longer updated in November 2017, the fork AFL++\cite{AFLPlusPlus} has become the de facto replacement.
+
+    However, while advancements on AFL++ have been introduced in many academic and commercial projects, because of the architecture of AFL++, these usually have not been introduced back to AFL++. This results in a list of incompatible forks, each with a proven improvement that makes the fuzzer more effective at its job.\cite{LibAFL} Because of this, the maintainers of AFL++ started a new project: LibAFL. It aims to provide a toolkit for building fuzzers that is flexible enough to allow combination of all these advancements. Refer to Section~\ref{LibAFLBackground} for more details on LibAFL. This work uses LibAFL to build a fuzzer aimed to find software defects in coreutils.
 
     \subsection{Research Questions}
     \label{ResearchQuestions}
+
+    The remainder of this work aims to answer the following questions:
+
     \begin{enumerate}
         \item Which parts of coreutils can be fuzzed? What performance tradeoffs does each part introduce?
         \item How can the necessary instrumentation be introduced into coreutils? What are the engineering and performance implications of each option?
@@ -135,11 +137,14 @@
         \item If yes, how effective is the this second fuzzer at finding bugs in coreutils? What kind of bug can be found with it?
     \end{enumerate}
 
+    Refer to Section~\ref{ResearchQuestionsDiscussion} for a summary of the answers produced in this work.
+
     \section{Background}
 
     To understand the requirements to and the architecture of the fuzzer, some background information on coreutils and LibAFL's architecture are necessary. This section provides an overview of these topics.
 
     \subsection{coreutils}
+    \label{Coreutils}
 
     On \citedate{FileUtilsAnnouncement}, {\DeclareNameAlias{labelname}{given-family}\citeauthor{FileUtilsAnnouncement}} announced fileutils, a suite of utilities for reading and altering files\cite{FileUtilsAnnouncement}. A year later, he released textutils (to parse and manipulate text)\cite{TextUtilsAnnouncement} and shellutils (to write powerful shell scripts)\cite{ShellUtilsAnnouncement}. These three collections were folded into one on \citedate{CoreUtilsAnnouncement}, called the GNU coreutils.\cite{CoreUtilsAnnouncement} \code{ls}, \code{cat}, \code{base64}, \code{grep}, \code{env}, or \code{whoami}: GNU's coreutils are at the basis of how users interact with most Linux distributions on the command line.\cite{GNULinux} Because they are so widely used and central to how users interact with their computers, software quality and lack of software defects is especially important to coreutils.
 
@@ -155,7 +160,7 @@
               \begin{itemize}
                   \item Unnamed arguments, either required (such as \code{cp <source> <destination>}) or optional (such as \code{ls [directory]})
                   \item Flags without any associated data, such as \code{--help}
-                  \item Flags with associated data, either required (such as \code{dd if=<input file> of=<output file>}) or optional {such as \code{-name <pattern>} in \code{find}}
+                  \item Flags with associated data, either required (such as \code{dd} \code{if=<input file>} \code{of=<output file>}) or optional {such as \code{-name <pattern>} in \code{find}}
               \end{itemize}
         \item Environment variables, such as \code{LANG}
         \item The file system content, such as for \code{ls}
@@ -185,6 +190,9 @@
     \label{LibAFLBackground}
     As introduced in Section~\ref{LibAFLHistory}, LibAFL is an extendible framework to build custom fuzzers. What follows is a short introduction to the ideas and parts of LibAFL necessary to understand this project. For a more in-depth look, the authors refer to the original LibAFL paper\cite{LibAFL}.
 
+    \subsubsection{Generic Concepts}
+    The core insight by the authors of LibAFL is that most fuzzers contain very similar parts, where advancements in new works are usually developments in only few of the fundamental fuzzer parts. The logic is usually either introduced into a fork of an existing fuzzer (such as AFL++), which is then abandoned without collecting the advancements in a way that they are reusable and combinable in later projects. Alternatively, authors might elect to create a new system from scratch, which introduces a lot of duplicate work and code, which isn't as optimized as possible, since fuzzer parts such as the thread synchronization usually aren't the focus of new works.
+
 \end{multicols}
 \begin{figure}[htbp]
     \centering
@@ -193,8 +201,6 @@
     \label{fig:LibAFLArchitecture}
 \end{figure}
 \begin{multicols}{2}
-    \subsubsection{Generic Concepts}
-    The core insight by the authors of LibAFL is that most fuzzers contain very similar parts, where advancements in new works are usually developments in only few of the fundamental fuzzer parts. The logic is usually either introduced into a fork of an existing fuzzer (such as AFL++), which is then abandoned without collecting the advancements in a way that they are reusable and combinable in later projects. Alternatively, authors might elect to create a new system from scratch, which introduces a lot of duplicate work and code, which isn't as optimized as possible, since fuzzer parts such as the thread synchronization usually aren't the focus of new works.
 
     The authors of LibAFL examined recent innovations in fuzzing and identified a set of distinct parts present in many of the fuzzers. They then designed the architecture of LibAFL in such a way that authors can change just the parts they are interested in and rely on a well-optimized default implementation for everything else. Figure\ref{fig:LibAFLArchitecture} shows the identified fuzzer parts and their interaction, as implemented in LibAFL. Using this architecture, the authors of LibAFL re-implemented the logic introduced in high-impact 20 works to both proof that the system is flexible enough to handle logic created indepen from their system. Finally, they showed that it is now trivial to combine advancements made in different works (i.e. combining the input scheduler of one work with new feedback types introduced in another).
 
