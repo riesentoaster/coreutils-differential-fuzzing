@@ -259,3 +259,209 @@
   url     = {https://aflplus.plus},
   urldate = {2024-06-03}
 }
+
+@article{UNIXRevisited,
+  author   = {Miller, Barton P. and Zhang, Mengxiao and Heymann, Elisa R.},
+  journal  = {IEEE Transactions on Software Engineering},
+  title    = {The Relevance of Classic Fuzz Testing: Have We Solved This One?},
+  year     = {2022},
+  volume   = {48},
+  number   = {6},
+  pages    = {2028-2039},
+  keywords = {Tools;Testing;Software;Operating systems;Fuzzing;Software reliability;Linux;Testing and debugging;testing tools},
+  doi      = {10.1109/TSE.2020.3047766}
+}
+
+@inproceedings{CLIFuzzer,
+  author    = {Gupta, Abhilash and Gopinath, Rahul and Zeller, Andreas},
+  title     = {CLIFuzzer: mining grammars for command-line invocations},
+  year      = {2022},
+  isbn      = {9781450394130},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/3540250.3558918},
+  doi       = {10.1145/3540250.3558918},
+  abstract  = {The behavior of command-line utilities can be very much influenced by passing command-line options and arguments—configuration 
+               settings that enable, disable, or otherwise influence parts of the code to be executed. Hence, systematic testing of command-line utilities requires testing them with diverse configurations of supported command-line options. 
+               
+               We introduce CLIFuzzer, a tool that takes an executable program and, using dynamic analysis to track input processing, automatically 
+               extract a full set of its options, arguments, and argument types. This set forms a grammar that represents the valid sequences of valid 
+               options and arguments. Producing invocations from this grammar, we can fuzz the program with an endless list of random configurations, covering the related code. This leads to increased coverage and new bugs over purely mutation based fuzzers.},
+  booktitle = {Proceedings of the 30th ACM Joint European Software Engineering Conference and Symposium on the Foundations of Software Engineering},
+  pages     = {1667–1671},
+  numpages  = {5},
+  keywords  = {CLI Options, command-line, fuzzing, utilities},
+  location  = {<conf-loc>, <city>Singapore</city>, <country>Singapore</country>, </conf-loc>},
+  series    = {ESEC/FSE 2022}
+}
+
+@online{AFLPlusPlusargv,
+  title   = {{Struggling to give inputs to AFL}},
+  author  = {Zalewski, Michal},
+  url     = {https://groups.google.com/g/afl-users/c/ZBWq0LdHBzw/m/zBlo7q9LBAAJ},
+  urldate = {2024-06-04}
+}
+@inproceedings{SEDiff,
+  author    = {Li, Penghui and Meng, Wei and Lu, Kangjie},
+  title     = {SEDiff: scope-aware differential fuzzing to test internal function models in symbolic execution},
+  year      = {2022},
+  isbn      = {9781450394130},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/3540250.3549080},
+  doi       = {10.1145/3540250.3549080},
+  abstract  = {Symbolic execution has become a foundational program analysis technique.  
+               Performing symbolic execution unavoidably encounters internal functions (e.g., library functions) that provide basic operations such as string processing.  
+               Many symbolic execution engines construct internal function models that abstract function behaviors for scalability and compatibility concerns.  
+               Due to the high complexity of constructing the models,  
+               developers intentionally summarize only partial behaviors of a function, namely modeled functionalities, in the models.  
+               The correctness of the internal function models is critical because  
+               it would impact all applications of symbolic execution, e.g., bug detection and model checking.  
+               
+               A naive solution to testing the correctness of internal function models is to cross-check whether the behaviors of the models comply with their corresponding original function implementations.  
+               However, such a solution would mostly detect overwhelming inconsistencies concerning the unmodeled functionalities, which are out of the scope of models and thus considered false reports.  
+               We argue that a reasonable testing approach should target only the functionalities that developers intend to model.  
+               While being necessary, automatically identifying the modeled functionalities, i.e., the scope, is a significant challenge.  
+               
+               In this paper, we propose a scope-aware differential testing framework, SEDiff, to tackle this problem.  
+               We design a novel algorithm to automatically map the modeled functionalities to the code in the original implementations.  
+               SEDiff then applies scope-aware grey-box differential fuzzing to relevant code in the original implementations.  
+               It also equips a new scope-aware input generator and a tailored bug checker that efficiently and correctly detect erroneous inconsistencies.  
+               We extensively evaluated SEDiff on several popular real-world symbolic execution engines targeting binary, web and kernel.  
+               Our manual investigation shows that SEDiff precisely identifies the modeled functionalities and detects  
+               46 new bugs in the internal function models used in the symbolic execution engines.},
+  booktitle = {Proceedings of the 30th ACM Joint European Software Engineering Conference and Symposium on the Foundations of Software Engineering},
+  pages     = {57–69},
+  numpages  = {13},
+  keywords  = {Symbolic Execution, Internal Function Models, Differential Testing},
+  location  = {<conf-loc>, <city>Singapore</city>, <country>Singapore</country>, </conf-loc>},
+  series    = {ESEC/FSE 2022}
+}
+
+@mastersthesis{DarpaExtended,
+  author = {Kilmer, Eric David},
+  school = {Penn State University},
+  title  = {Extending Vulnerability Discovery with Fuzzing and Symbolic Execution to Realistic Applications},
+  date   = {2017-06-09}
+}
+@conference{Seccomp,
+  author       = {Marcus Gelderie. and Valentin Barth. and Maximilian Luff. and Julian Birami.},
+  title        = {Seccomp Filters from Fuzzing},
+  booktitle    = {Proceedings of the 19th International Conference on Security and Cryptography - SECRYPT},
+  year         = {2022},
+  pages        = {507-512},
+  publisher    = {SciTePress},
+  organization = {INSTICC},
+  doi          = {10.5220/0011145100003283},
+  isbn         = {978-989-758-590-6},
+  issn         = {2184-7711}
+}
+
+@inproceedings{FUSE,
+  author    = {Zhang, Guofeng and Chen, Zhenbang and Shuai, Ziqi and Zhang, Yufeng and Wang, Ji},
+  booktitle = {2022 29th Asia-Pacific Software Engineering Conference (APSEC)},
+  title     = {Synergizing Symbolic Execution and Fuzzing By Function-level Selective Symbolization},
+  year      = {2022},
+  volume    = {},
+  number    = {},
+  pages     = {328-337},
+  keywords  = {Codes;Fuses;Source coding;Semantics;Fuzzing;Benchmark testing;Libraries;Symbolic Execution;Constraint Solving;Fuzzing;Environment Modeling},
+  doi       = {10.1109/APSEC57359.2022.00045}
+}
+
+
+@inproceedings{KLEE,
+  author    = {Cadar, Cristian and Dunbar, Daniel and Engler, Dawson},
+  title     = {KLEE: unassisted and automatic generation of high-coverage tests for complex systems programs},
+  year      = {2008},
+  publisher = {USENIX Association},
+  address   = {USA},
+  abstract  = {We present a new symbolic execution tool, KLEE, capable of automatically generating tests that achieve high coverage on a diverse set of complex and environmentally-intensive programs. We used KLEE to thoroughly check all 89 stand-alone programs in the GNU COREUTILS utility suite, which form the core user-level environment installed on millions of Unix systems, and arguably are the single most heavily tested set of open-source programs in existence. KLEE-generated tests achieve high line coverage -- on average over 90\% per tool (median: over 94\%) -- and significantly beat the coverage of the developers' own hand-written test suite. When we did the same for 75 equivalent tools in the BUSYBOX embedded system suite, results were even better, including 100\% coverage on 31 of them.We also used KLEE as a bug finding tool, applying it to 452 applications (over 430K total lines of code), where it found 56 serious bugs, including three in COREUTILS that had been missed for over 15 years. Finally, we used KLEE to crosscheck purportedly identical BUSYBOX and COREUTILS utilities, finding functional correctness errors and a myriad of inconsistencies.},
+  booktitle = {Proceedings of the 8th USENIX Conference on Operating Systems Design and Implementation},
+  pages     = {209–224},
+  numpages  = {16},
+  location  = {San Diego, California},
+  series    = {OSDI'08}
+}
+
+@inproceedings{CRETE,
+  author    = {Chen, Bo and Havlicek, Christopher and Yang, Zhenkun and Cong, Kai and Kannavara, Raghudeep and Xie, Fei},
+  editor    = {Russo, Alessandra and Sch{\"u}rr, Andy},
+  title     = {CRETE: A Versatile Binary-Level Concolic Testing Framework},
+  booktitle = {Fundamental Approaches to Software Engineering},
+  year      = {2018},
+  publisher = {Springer International Publishing},
+  address   = {Cham},
+  pages     = {281--298},
+  abstract  = {In this paper, we present crete, a versatile binary-level concolic testing framework, which features an open and highly extensible architecture allowing easy integration of concrete execution frontends and symbolic execution engine backends. crete's extensibility is rooted in its modular design where concrete and symbolic execution is loosely coupled only through standardized execution traces and test cases. The standardized execution traces are llvm-based, self-contained, and composable, providing succinct and sufficient information for symbolic execution engines to reproduce the concrete executions. We have implemented crete with klee as the symbolic execution engine and multiple concrete execution frontends such as qemu and 8051 Emulator. We have evaluated the effectiveness of crete on GNU Coreutils programs and TianoCore utility programs for UEFI BIOS. The evaluation of Coreutils programs shows that crete achieved comparable code coverage as klee directly analyzing the source code of Coreutils and generally outperformed angr. The evaluation of TianoCore utility programs found numerous exploitable bugs that were previously unreported.},
+  isbn      = {978-3-319-89363-1}
+}
+
+
+@inproceedings{IMF-SIM,
+  author    = {Wang, Shuai and Wu, Dinghao},
+  booktitle = {2017 32nd IEEE/ACM International Conference on Automated Software Engineering (ASE)},
+  title     = {In-memory fuzzing for binary code similarity analysis},
+  year      = {2017},
+  volume    = {},
+  number    = {},
+  pages     = {319-330},
+  keywords  = {Binary codes;Tools;Runtime;Indexes;Syntactics;In-memory fuzzing;code similarity;reverse engineering;taint analysis},
+  doi       = {10.1109/ASE.2017.8115645}
+}
+
+@inproceedings{Learch,
+  author    = {He, Jingxuan and Sivanrupan, Gishor and Tsankov, Petar and Vechev, Martin},
+  title     = {Learning to Explore Paths for Symbolic Execution},
+  year      = {2021},
+  isbn      = {9781450384544},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/3460120.3484813},
+  doi       = {10.1145/3460120.3484813},
+  abstract  = {Symbolic execution is a powerful technique that can generate tests steering program execution into desired paths. However, the scalability of symbolic execution is often limited by path explosion, i.e., the number of symbolic states representing the paths under exploration quickly explodes as execution goes on. Therefore, the effectiveness of symbolic execution engines hinges on the ability to select and explore the right symbolic states.In this work, we propose a novel learning-based strategy, called Learch, able to effectively select promising states for symbolic execution to tackle the path explosion problem. Learch directly estimates the contribution of each state towards the goal of maximizing coverage within a time budget, as opposed to relying on manually crafted heuristics based on simple statistics as a crude proxy for the objective. Moreover, Learch leverages existing heuristics in training data generation and feature extraction, and can thus benefit from any new expert-designed heuristics. We instantiated Learch in KLEE, a widely adopted symbolic execution engine. We evaluated Learch on a diverse set of programs, showing that Learch is practically effective: it covers more code and detects more security violations than existing manual heuristics, as well as combinations of those heuristics. We also show that using tests generated by Learch as initial fuzzing seeds enables the popular fuzzer AFL to find more paths and security violations.},
+  booktitle = {Proceedings of the 2021 ACM SIGSAC Conference on Computer and Communications Security},
+  pages     = {2526–2540},
+  numpages  = {15},
+  keywords  = {fuzzing, machine learning, program testing, symbolic execution},
+  location  = {Virtual Event, Republic of Korea},
+  series    = {CCS '21}
+}
+
+@article{10.1145/2345156.2254088,
+  author     = {Kuznetsov, Volodymyr and Kinder, Johannes and Bucur, Stefan and Candea, George},
+  title      = {Efficient state merging in symbolic execution},
+  year       = {2012},
+  issue_date = {June 2012},
+  publisher  = {Association for Computing Machinery},
+  address    = {New York, NY, USA},
+  volume     = {47},
+  number     = {6},
+  issn       = {0362-1340},
+  url        = {https://doi.org/10.1145/2345156.2254088},
+  doi        = {10.1145/2345156.2254088},
+  abstract   = {Symbolic execution has proven to be a practical technique for building automated test case generation and bug finding tools. Nevertheless, due to state explosion, these tools still struggle to achieve scalability. Given a program, one way to reduce the number of states that the tools need to explore is to merge states obtained on different paths. Alas, doing so increases the size of symbolic path conditions (thereby stressing the underlying constraint solver) and interferes with optimizations of the exploration process (also referred to as search strategies). The net effect is that state merging may actually lower performance rather than increase it.We present a way to automatically choose when and how to merge states such that the performance of symbolic execution is significantly increased. First, we present query count estimation, a method for statically estimating the impact that each symbolic variable has on solver queries that follow a potential merge point; states are then merged only when doing so promises to be advantageous. Second, we present dynamic state merging, a technique for merging states that interacts favorably with search strategies in automated test case generation and bug finding tools.Experiments on the 96 GNU Coreutils show that our approach consistently achieves several orders of magnitude speedup over previously published results. Our code and experimental data are publicly available at http://cloud9.epfl.ch.},
+  journal    = {SIGPLAN Not.},
+  month      = {jun},
+  pages      = {193–204},
+  numpages   = {12},
+  keywords   = {verification, testing, symbolic execution, state merging, bounded software model checking}
+}
+
+@inproceedings{Cloud9,
+  author    = {Kuznetsov, Volodymyr and Kinder, Johannes and Bucur, Stefan and Candea, George},
+  title     = {Efficient state merging in symbolic execution},
+  year      = {2012},
+  isbn      = {9781450312059},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/2254064.2254088},
+  doi       = {10.1145/2254064.2254088},
+  abstract  = {Symbolic execution has proven to be a practical technique for building automated test case generation and bug finding tools. Nevertheless, due to state explosion, these tools still struggle to achieve scalability. Given a program, one way to reduce the number of states that the tools need to explore is to merge states obtained on different paths. Alas, doing so increases the size of symbolic path conditions (thereby stressing the underlying constraint solver) and interferes with optimizations of the exploration process (also referred to as search strategies). The net effect is that state merging may actually lower performance rather than increase it.We present a way to automatically choose when and how to merge states such that the performance of symbolic execution is significantly increased. First, we present query count estimation, a method for statically estimating the impact that each symbolic variable has on solver queries that follow a potential merge point; states are then merged only when doing so promises to be advantageous. Second, we present dynamic state merging, a technique for merging states that interacts favorably with search strategies in automated test case generation and bug finding tools.Experiments on the 96 GNU Coreutils show that our approach consistently achieves several orders of magnitude speedup over previously published results. Our code and experimental data are publicly available at http://cloud9.epfl.ch.},
+  booktitle = {Proceedings of the 33rd ACM SIGPLAN Conference on Programming Language Design and Implementation},
+  pages     = {193–204},
+  numpages  = {12},
+  keywords  = {verification, testing, symbolic execution, state merging, bounded software model checking},
+  location  = {Beijing, China},
+  series    = {PLDI '12}
+}
