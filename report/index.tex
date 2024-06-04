@@ -437,9 +437,13 @@ uutils-base64: error: invalid input
 
     \subsection{Performance}
 
-    Across 64 fully loaded cores of an AMD EPYC 7713 with 64~GB of RAM, the complete fuzzer in its differential fuzzing modes achieves approximately 1500 executions per second. According to the fuzzer, only 3.405\% of edge coverage is reached.
+    Across 64 fully loaded cores of an AMD EPYC 7713 with 64~GB of RAM, the complete fuzzer in its differential fuzzing modes achieves approximately 1500 executions per second.
 
-    To gather additional information about this number, the GNU coreutils were additionally compiled with instrumentation for coverage analysis with \code{gcov}. The fuzzer was then instructed to execute \code{Input}s, that reached new edges on this version of the program under test. This is accomplished by introducing a new \code{Feedback}, which can be attached to the \code{MaxMapFeedback} using boolean logic operators in a way it is only evaluated when the \code{MaxMapFeedback} considers the \code{Input} interesting. This new \code{Feedback} returns a constant interestingness and simply runs the \code{gcov} instrumented binary with the current \code{Input}. This results in only 1690 executions on an evaluation run with millions of executions on the binaries under test, thus introducing negligible performance overhead.
+    TODO: Compare this number with simple invocations of un-instrumented coreutils to find out how much overhead the fuzzer including all its part actually introduces. Also consider LibAFL's (scalability) performance insight module.
+
+    \subsubsection{Coverage}
+
+    According to the fuzzer, only 3.405\% of edge coverage is reached in its differential mode. To gather additional information about this number, the GNU coreutils were additionally compiled with instrumentation for coverage analysis with \code{gcov}. The fuzzer was then instructed to execute \code{Input}s, that reached new edges on this version of the program under test. This is accomplished by introducing a new \code{Feedback}, which can be attached to the \code{MaxMapFeedback} using boolean logic operators in a way it is only evaluated when the \code{MaxMapFeedback} considers the \code{Input} interesting. This new \code{Feedback} returns a constant interestingness and simply runs the \code{gcov} instrumented binary with the current \code{Input}. This results in only 1690 executions on an evaluation run with millions of executions on the binaries under test, thus introducing negligible performance overhead.
 
     Analysis of the results reported by \code{gcov} shows that 62.26\% of 212 lines were executed. Manual inspection of the coverage file showed that the missing lines either consist of \code{stdio} error handling code (e.g. write operations to \code{stdout}, which should never fail, since pipes aren't intentionally broken by the fuzzer) and code for the \code{--version} and \code{--help} flags.
 
@@ -483,6 +487,8 @@ uutils-base64: error: invalid input
 
     \subsection{Performance on Individual Implementations}
     \label{IndividualFuzzers}
+
+    TODO: Compare performance on GNU vs. performance on uutils vs. performance on both
 
     \subsection{Discovered Errors}
     \label{Errors}
