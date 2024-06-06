@@ -498,7 +498,17 @@ uutils-base64: error: invalid input
     \section{State of the Art}
     \label{StateOfTheArt}
 
-    The author could not find any previous project attempting to employ differential fuzzing to find software errors in coreutils. However, there exist projects fuzzing coreutils using other approaches and projects employing differential fuzzing on other targets. This section presents a selection of these.
+    This is not the first project performing differential fuzzing nor the first project fuzzing coreutils. This section introduces previous works and discusses their limitations, as compared to this project.
+
+    \subsection{uutils' Fuzzing Sub-Project}
+
+    The only other project performing differential fuzzing on coreutils the author could find is within the uutils coreutils repository. It contains code to fuzz 16 programs, 11 of which perform differential fuzzing against the system installation of the appropriate program from GNU coreutils.
+
+    libFuzzer is used as a fuzzing backend, which integrates with cargo and provides coverage instrumentation. However, the interface of libFuzzer is currently limited to the \code{fuzz_target} macro, which only supports input types in the shape of simple byte arrays. In the project in its current state, this input is not used in combination with differential fuzzing. For those programs, the input is manually randomly generated, thus loosing any advantage that coverage-guided fuzzing introduces.
+
+    Only for the non-differential fuzzers, the input provided by libFuzzer is used. 4 of 5 fuzzing binaries in this category do not test entire programs but instead imported parsing routines, with \code{date} being the only program from the coreutils suite where actual coverage-guided fuzzing is performed. The command line arguments are generated from the byte array input by splitting at \code{NULL} bytes. This is not a generally viable strategy, as is argued in Section~\ref{Environment}.
+
+    Overall, compared to uutils' fuzzing sub-project, this work performs both coverage-guided and differential fuzzing at the same time, while utilizing the flexibility gained by building on top of LibAFL to increase performance and ensure environment protection and thus reliable testing.
 
     \subsection{Fuzzing coreutils}
 
