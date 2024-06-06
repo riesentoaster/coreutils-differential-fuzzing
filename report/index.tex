@@ -1,7 +1,3 @@
-% TODO: Add n.d. as year entry for bib entries that don't have a date. (Search for "()" in the PDF)
-% TODO: Fix page breaks before captions
-% TODO: Position LibAFL architecture diagram where it makes sense to fix multicols reset.
-
 \documentclass{article}
 \usepackage[hidelinks]{hyperref}
 \usepackage{csquotes}
@@ -88,23 +84,26 @@
     \begin{minipage}{0.8\textwidth}
         \vspace{70px}
         \begin{abstract}
-            Hello, %
-            %
-            World! %
-            %
-            TODO: write
+            TODO: write abstract
+            \\
+            \\
+            \\
+            Global TODOs:
+            \begin{itemize}
+                \item TODO: Add n.d. as year entry for bib entries that don't have a date. (Search for "()" in the PDF)
+                \item TODO: Fix page breaks before captions
+                \item TODO: Position LibAFL architecture diagram where it makes sense to fix multicols reset.
+            \end{itemize}
         \end{abstract}
     \end{minipage}
 \end{center}
 
 \clearpage\newpage
-\newgeometry{vmargin=25mm, hmargin=40mm}
-\tableofcontents
-\clearpage\newpage
-\restoregeometry
-\pagenumbering{arabic}
 
+\pagenumbering{arabic}
 \begin{multicols}{2}
+    \tableofcontents
+
     \section{Introduction}
 
     Fuzz testing has developed into an important tool for finding software defects. By repeatedly running a program under test with varied input data and detecting illegal states such as crashes, it is an automated alternative to manual security and reliability testing. Introduced in \citeyear{UNIX} in the seminal work by \citeauthor{UNIX}\cite{UNIX}, it is now widely used in industry. Companies such as Google, Microsoft, Cisco, or Adobe and governmental agencies such as the US Department of Defense have developed proprietary fuzzers or contributed to open source fuzzers. Fuzz testing has proven an effective tool for both security and reliability testing. Its accolades include, among others, 20,000 discovered vulnerabilities in Google's Chrome browser alone.\cite{Demystifying}
@@ -495,6 +494,8 @@ uutils-base64: error: invalid input
 
     \subsection{Discovered Errors}
     \label{Errors}
+
+    TODO: Write
 
     \section{State of the Art}
     \label{StateOfTheArt}
