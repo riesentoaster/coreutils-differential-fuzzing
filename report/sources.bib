@@ -442,3 +442,292 @@
   location  = {Beijing, China},
   series    = {PLDI '12}
 }
+
+@inproceedings{DLFuzz,
+  author    = {Guo, Jianmin and Jiang, Yu and Zhao, Yue and Chen, Quan and Sun, Jiaguang},
+  title     = {{DLFuzz}: differential fuzzing testing of deep learning systems},
+  year      = {2018},
+  isbn      = {9781450355735},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/3236024.3264835},
+  doi       = {10.1145/3236024.3264835},
+  abstract  = {Deep learning (DL) systems are increasingly applied to safety-critical domains such as autonomous driving cars. It is of significant importance to ensure the reliability and robustness of DL systems. Existing testing methodologies always fail to include rare inputs in the testing dataset and exhibit low neuron coverage. In this paper, we propose DLFuzz, the first differential fuzzing testing framework to guide DL systems exposing incorrect behaviors. DLFuzz keeps minutely mutating the input to maximize the neuron coverage and the prediction difference between the original input and the mutated input, without manual labeling effort or cross-referencing oracles from other DL systems with the same functionality. We present empirical evaluations on two well-known datasets to demonstrate its efficiency. Compared with DeepXplore, the state-of-the-art DL whitebox testing framework, DLFuzz does not require extra efforts to find similar functional DL systems for cross-referencing check, but could generate 338.59\% more adversarial inputs with 89.82\% smaller perturbations, averagely obtain 2.86\% higher neuron coverage, and save 20.11\% time consumption.},
+  booktitle = {Proceedings of the 2018 26th ACM Joint Meeting on European Software Engineering Conference and Symposium on the Foundations of Software Engineering},
+  pages     = {739–743},
+  numpages  = {5},
+  keywords  = {Neuron Coverage, Fuzzing Testing, Deep Learning},
+  location  = {Lake Buena Vista, FL, USA},
+  series    = {ESEC/FSE 2018}
+}
+@inproceedings{DPIFuzz,
+  author    = {Reen, Gaganjeet Singh and Rossow, Christian},
+  title     = {{DPIFuzz}: A Differential Fuzzing Framework to Detect DPI Elusion Strategies for QUIC},
+  year      = {2020},
+  isbn      = {9781450388580},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/3427228.3427662},
+  doi       = {10.1145/3427228.3427662},
+  abstract  = {QUIC is an emerging transport protocol that has the potential to replace TCP in the near future. As such, QUIC will become an important target for Deep Packet Inspection (DPI). Reliable DPI is essential, e.g., for corporate environments, to monitor traffic entering and leaving their networks. However, elusion strategies threaten the validity of DPI systems, as they allow attackers to carefully design traffic to fool and thus evade on-path DPI systems. While such elusion strategies for TCP are well documented, it is unclear if attackers will be able to elude QUIC-based DPI systems. In this paper, we systematically explore elusion methodologies for QUIC. To this end, we present DPIFuzz: a differential fuzzing framework which can automatically detect strategies to elude stateful DPI systems for QUIC. We use DPIFuzz to generate and mutate QUIC streams in order to compare (and find differences in) the server-side interpretations of five popular open-source QUIC implementations. We show that DPIFuzz successfully reveals DPI elusion strategies, such as using packets with duplicate packet numbers or exploiting the diverging handling of overlapping stream offsets by QUIC implementations. DPIFuzz additionally finds four security-critical vulnerabilities in these QUIC implementations.},
+  booktitle = {Proceedings of the 36th Annual Computer Security Applications Conference},
+  pages     = {332–344},
+  numpages  = {13},
+  keywords  = {QUIC, Protocol Fuzzing, Differential Fuzzing, DPI Elusion},
+  location  = {<conf-loc>, <city>Austin</city>, <country>USA</country>, </conf-loc>},
+  series    = {ACSAC '20}
+}
+
+@inproceedings{T-Reqs,
+  author    = {Jabiyev, Bahruz and Sprecher, Steven and Onarlioglu, Kaan and Kirda, Engin},
+  title     = {{T-Reqs}: HTTP Request Smuggling with Differential Fuzzing},
+  year      = {2021},
+  isbn      = {9781450384544},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/3460120.3485384},
+  doi       = {10.1145/3460120.3485384},
+  abstract  = {HTTP Request Smuggling (HRS) is an attack that exploits the HTTP processing discrepancies between two servers deployed in a proxy-origin configuration, allowing attackers to smuggle hidden requests through the proxy. While this idea is not new, HRS is soaring in popularity due to recently revealed novel exploitation techniques and real-life abuse scenarios. In this work, we step back from the highly-specific exploits hogging the spotlight, and present the first work that systematically explores HRS within a scientific framework. We design an experiment infrastructure powered by a novel grammar-based differential fuzzer, test 10 popular server/proxy/CDN technologies in combinations, identify pairs that result in processing discrepancies, and discover exploits that lead to HRS. Our experiment reveals previously unknown ways to manipulate HTTP requests for exploitation, and for the first time documents the server pairs prone to HRS.},
+  booktitle = {Proceedings of the 2021 ACM SIGSAC Conference on Computer and Communications Security},
+  pages     = {1805–1820},
+  numpages  = {16},
+  keywords  = {HTTP request smuggling, HTTP desync attacks},
+  location  = {Virtual Event, Republic of Korea},
+  series    = {CCS '21}
+}
+
+@article{JVM,
+  author     = {Chen, Yuting and Su, Ting and Sun, Chengnian and Su, Zhendong and Zhao, Jianjun},
+  title      = {Coverage-directed differential testing of JVM implementations},
+  year       = {2016},
+  issue_date = {June 2016},
+  publisher  = {Association for Computing Machinery},
+  address    = {New York, NY, USA},
+  volume     = {51},
+  number     = {6},
+  issn       = {0362-1340},
+  url        = {https://doi.org/10.1145/2980983.2908095},
+  doi        = {10.1145/2980983.2908095},
+  abstract   = {Java virtual machine (JVM) is a core technology, whose reliability is critical. Testing JVM implementations requires painstaking effort in designing test classfiles (*.class) along with their test oracles. An alternative is to employ binary fuzzing to differentially test JVMs by blindly mutating seeding classfiles and then executing the resulting mutants on different JVM binaries for revealing inconsistent behaviors. However, this blind approach is not cost effective in practice because most of the mutants are invalid and redundant. This paper tackles this challenge by introducing classfuzz, a coverage-directed fuzzing approach that focuses on representative classfiles for differential testing of JVMs’ startup processes. Our core insight is to (1) mutate seeding classfiles using a set of predefined mutation operators (mutators) and employ Markov Chain Monte Carlo (MCMC) sampling to guide mutator selection, and (2) execute the mutants on a reference JVM implementation and use coverage uniqueness as a discipline for accepting representative ones. The accepted classfiles are used as inputs to differentially test different JVM implementations and find defects. We have implemented classfuzz and conducted an extensive evaluation of it against existing fuzz testing algorithms. Our evaluation results show that classfuzz can enhance the ratio of discrepancy-triggering classfiles from 1.7\% to 11.9\%. We have also reported 62 JVM discrepancies, along with the test classfiles, to JVM developers. Many of our reported issues have already been confirmed as JVM defects, and some even match recent clarifications and changes to the Java SE 8 edition of the JVM specification.},
+  journal    = {SIGPLAN Not.},
+  month      = {06},
+  pages      = {85–99},
+  numpages   = {15},
+  keywords   = {fuzz testing, MCMC sampling, Java virtual machine, Differential testing}
+}
+
+@inproceedings{HyDiff,
+  author    = {Noller, Yannic and P\u{a}s\u{a}reanu, Corina S. and B\"{o}hme, Marcel and Sun, Youcheng and Nguyen, Hoang Lam and Grunske, Lars},
+  title     = {{HyDiff}: hybrid differential software analysis},
+  year      = {2020},
+  isbn      = {9781450371216},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/3377811.3380363},
+  doi       = {10.1145/3377811.3380363},
+  abstract  = {Detecting regression bugs in software evolution, analyzing side-channels in programs and evaluating robustness in deep neural networks (DNNs) can all be seen as instances of differential software analysis, where the goal is to generate diverging executions of program paths. Two executions are said to be diverging if the observable program behavior differs, e.g., in terms of program output, execution time, or (DNN) classification. The key challenge of differential software analysis is to simultaneously reason about multiple program paths, often across program variants.This paper presents HyDiff, the first hybrid approach for differential software analysis. HyDiff integrates and extends two very successful testing techniques: Feedback-directed greybox fuzzing for efficient program testing and shadow symbolic execution for systematic program exploration. HyDiff extends greybox fuzzing with divergence-driven feedback based on novel cost metrics that also take into account the control flow graph of the program. Furthermore HyDiff extends shadow symbolic execution by applying four-way forking in a systematic exploration and still having the ability to incorporate concrete inputs in the analysis. HyDiff applies divergence revealing heuristics based on resource consumption and control-flow information to efficiently guide the symbolic exploration, which allows its efficient usage beyond regression testing applications. We introduce differential metrics such as output, decision and cost difference, as well as patch distance, to assist the fuzzing and symbolic execution components in maximizing the execution divergence.We implemented our approach on top of the fuzzer AFL and the symbolic execution framework Symbolic PathFinder. Weillustrate HyDiff on regression and side-channel analysis for Java bytecode programs, and further show how to use HyDiff for robustness analysis of neural networks.},
+  booktitle = {Proceedings of the ACM/IEEE 42nd International Conference on Software Engineering},
+  pages     = {1273–1285},
+  numpages  = {13},
+  keywords  = {symbolic execution, fuzzing, differential program analysis},
+  location  = {Seoul, South Korea},
+  series    = {ICSE '20}
+}
+
+@inproceedings{Fluffy,
+  author    = {Youngseok Yang and Taesoo Kim and Byung-Gon Chun},
+  title     = {Finding Consensus Bugs in Ethereum via Multi-transaction Differential Fuzzing},
+  booktitle = {15th USENIX Symposium on Operating Systems Design and Implementation (OSDI 21)},
+  year      = {2021},
+  isbn      = {978-1-939133-22-9},
+  pages     = {349--365},
+  url       = {https://www.usenix.org/conference/osdi21/presentation/yang},
+  publisher = {USENIX Association},
+  month     = {07}
+}
+
+@inproceedings{JIT-Picking,
+  author    = {Bernhard, Lukas and Scharnowski, Tobias and Schloegel, Moritz and Blazytko, Tim and Holz, Thorsten},
+  title     = {{JIT-Picking}: Differential Fuzzing of JavaScript Engines},
+  year      = {2022},
+  isbn      = {9781450394505},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/3548606.3560624},
+  doi       = {10.1145/3548606.3560624},
+  abstract  = {Modern JavaScript engines that power websites and even full applications on the Web are driven by the need for an increasingly fast and snappy user experience. These engines use several complex and potentially error-prone mechanisms to optimize their performance. Unsurprisingly, the inevitable complexity results in a huge attack surface and varioustypes of software vulnerabilities. On the defender's side, fuzz testing has proven to be an invaluable tool for uncovering different kinds of memory safety violations. Although it is difficult to test interpreters and JIT compilers in an automated way, recent proposals for input generation based on grammars or target-specific intermediate representations helped uncovering many software faults. However, subtle logic bugs and miscomputations that arise from optimization passes in JIT engines continue to elude state-of-the-art testing methods. While such flaws might seem unremarkable at first glance, they are often still exploitable in practice. In this paper, we propose a novel technique for effectively uncovering this class of subtle bugs during fuzzing. The key idea is to take advantage of the tight coupling between a JavaScript engine's interpreter and its corresponding JIT compiler as a domain-specific and generic bug oracle, which in turn yields a highly sensitive fault detection mechanism. We have designed and implemented a prototype of the proposed approach in a tool called JIT-Picker. In an empirical evaluation, we show that our method enables us to detect subtle software faults that prior work missed. In total, we uncovered 32 bugs that were not publicly known and received a $10.000 bug bounty from Mozilla as a reward for our contributions to JIT engine security.},
+  booktitle = {Proceedings of the 2022 ACM SIGSAC Conference on Computer and Communications Security},
+  pages     = {351–364},
+  numpages  = {14},
+  keywords  = {software security, jit engine, fuzzing, differential testing, browser},
+  location  = {Los Angeles, CA, USA},
+  series    = {CCS '22}
+}
+@inproceedings{DifFuzz,
+  author    = {Nilizadeh, Shirin and Noller, Yannic and Pasareanu, Corina S.},
+  booktitle = {2019 IEEE/ACM 41st International Conference on Software Engineering (ICSE)},
+  title     = {{DifFuzz}: Differential Fuzzing for Side-Channel Analysis},
+  year      = {2019},
+  volume    = {},
+  number    = {},
+  pages     = {176-187},
+  keywords  = {Fuzzing;Java;Tools;Time factors;Instruments;Correlation;Performance analysis;vulnerability detection;side-channel;dynamic analysis;fuzzing},
+  doi       = {10.1109/ICSE.2019.00034}
+}
+
+@article{ExploitingDissent,
+  author   = {Walz, Andreas and Sikora, Axel},
+  journal  = {IEEE Transactions on Dependable and Secure Computing},
+  title    = {Exploiting Dissent: Towards Fuzzing-Based Differential Black-Box Testing of TLS Implementations},
+  year     = {2020},
+  volume   = {17},
+  number   = {2},
+  pages    = {278-291},
+  keywords = {Protocols;Testing;Computer bugs;Cryptography;Servers;Complexity theory;TLS;network security;cryptographic protocols;fuzzing;differential testing},
+  doi      = {10.1109/TDSC.2017.2763947}
+}
+
+@inproceedings{JVM2,
+  author    = {Chen, Yuting and Su, Ting and Su, Zhendong},
+  booktitle = {2019 IEEE/ACM 41st International Conference on Software Engineering (ICSE)},
+  title     = {Deep Differential Testing of JVM Implementations},
+  year      = {2019},
+  volume    = {},
+  number    = {},
+  pages     = {1257-1268},
+  keywords  = {Monitoring;Testing;Java;Engines;Security;Computer crashes;Runtime;Differential JVM testing;live bytecode mutation;semantically different mutants},
+  doi       = {10.1109/ICSE.2019.00127}
+}
+
+@article{EVMFuzz,
+  author   = {Fu, Ying and Ren, Meng and Ma, Fuchen and Yang, Xin and Shi, Heyuan and Li, Shanshan and Liao, Xiangke},
+  title    = {EVMFuzz: Differential fuzz testing of Ethereum virtual machine},
+  journal  = {Journal of Software: Evolution and Process},
+  volume   = {36},
+  number   = {4},
+  pages    = {e2556},
+  keywords = {differential testing, domain-specific mutation, EVM, fuzzing},
+  doi      = {https://doi.org/10.1002/smr.2556},
+  url      = {https://onlinelibrary.wiley.com/doi/abs/10.1002/smr.2556},
+  eprint   = {https://onlinelibrary.wiley.com/doi/pdf/10.1002/smr.2556},
+  abstract = {Abstract The vulnerabilities in Ethereum virtual machine (EVM) may lead to serious problems for the Ethereum ecosystem. With lots of techniques being developed for the validation of smart contracts, the testing of EVM has not been well-studied. In this paper, we propose EVMFuzz, the first that uses the differential fuzzing technique to detect vulnerabilities in EVM. The core idea of EVMFuzz is to continuously generate seed contracts for different EVMs' execution, so as to find as many inconsistencies among execution results as possible, and eventually discover vulnerabilities with output cross-referencing. First, we present the evaluation metric for the internal inconsistency indicator. Then, we construct seed contracts via predefined mutators and employ a dynamic priority scheduling algorithm to guide seed contract selection and maximize the inconsistency. Finally, we leverage different EVMs as cross-referencing oracles avoiding manual checking. For evaluation, we selected four widely used EVMs for the test, conducted large-scale mutation on 36,295 real-world smart contracts, and generated 253,153 smart contracts as initial seeds. Accompanied by manual root cause analysis, we found five previously unknown security bugs and all had been included in the common vulnerabilities and exposures (CVE) database.},
+  year     = {2024}
+}
+
+@inproceedings{NEZHA,
+  author    = {Petsios, Theofilos and Tang, Adrian and Stolfo, Salvatore and Keromytis, Angelos D. and Jana, Suman},
+  booktitle = {2017 IEEE Symposium on Security and Privacy (SP)},
+  title     = {{NEZHA}: Efficient Domain-Independent Differential Testing},
+  year      = {2017},
+  volume    = {},
+  number    = {},
+  pages     = {615-632},
+  keywords  = {Testing;Computer bugs;Semantics;Tools;Software;Libraries;Security;nezha;differential testing;fuzzing},
+  doi       = {10.1109/SP.2017.27}
+}
+
+
+@inproceedings{TLS,
+  author    = {Walz, Andreas and Sikora, Axel},
+  booktitle = {2018 International Carnahan Conference on Security Technology (ICCST)},
+  title     = {Maximizing and Leveraging Behavioral Discrepancies in TLS Implementations using Response-Guided Differential Fuzzing},
+  year      = {2018},
+  volume    = {},
+  number    = {},
+  pages     = {1-5},
+  keywords  = {Fuzzing;Protocols;Security;Servers;Indexes;Probability distribution;TLS;network security;protocol implementation security;fuzzing;differential testing},
+  doi       = {10.1109/CCST.2018.8585565}
+}
+
+@article{ParDiff,
+  author     = {Zheng, Mingwei and Shi, Qingkai and Liu, Xuwei and Xu, Xiangzhe and Yu, Le and Liu, Congyu and Wei, Guannan and Zhang, Xiangyu},
+  title      = {{ParDiff}: Practical Static Differential Analysis of Network Protocol Parsers},
+  year       = {2024},
+  issue_date = {April 2024},
+  publisher  = {Association for Computing Machinery},
+  address    = {New York, NY, USA},
+  volume     = {8},
+  number     = {OOPSLA1},
+  url        = {https://doi.org/10.1145/3649854},
+  doi        = {10.1145/3649854},
+  abstract   = {Countless devices all over the world are connected by networks and communicated via network protocols. Just like common software, protocol implementations suffer from bugs, many of which only cause silent data corruption instead of crashes. Hence, existing automated bug-finding techniques focused on memory safety, such as fuzzing, can hardly detect them. In this work, we propose a static differential analysis called ParDiff to find protocol implementation bugs, especially silent ones hidden in message parsers. Our key observation is that a network protocol often has multiple implementations and any semantic discrepancy between them may indicate bugs. However, different implementations are often written in disparate styles, e.g., using different data structures or written with different control structures, making it challenging to directly compare two implementations of even the same protocol. To exploit this observation and effectively compare multiple protocol implementations, ParDiff (1) automatically extracts finite state machines from programs to represent protocol format specifications, and (2) then leverages bisimulation and SMT solvers to find fine-grained and  
+                semantic inconsistencies between them. We have extensively evaluated ParDiff using 14 network protocols. The results show that ParDiff outperforms both differential symbolic execution and differential fuzzing tools. To date, we have detected 41 bugs with 25 confirmed by developers.},
+  journal    = {Proc. ACM Program. Lang.},
+  month      = {04},
+  articleno  = {137},
+  numpages   = {27},
+  keywords   = {Network protocol, differential analysis, protocol format specification, static program analysis}
+}
+
+@inproceedings{NeoDiff,
+  author    = {Maier, Dominik and F\"{a}\ss{}ler, Fabian and Seifert, Jean-Pierre},
+  title     = {Uncovering Smart Contract VM Bugs Via Differential Fuzzing},
+  year      = {2022},
+  isbn      = {9781450396028},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/3503921.3503923},
+  doi       = {10.1145/3503921.3503923},
+  booktitle = {Reversing and Offensive-Oriented Trends Symposium},
+  pages     = {11–22},
+  numpages  = {12},
+  keywords  = {State-Aware, Smart Contract VM, Differential Fuzzing},
+  location  = {Vienna, Austria},
+  series    = {ROOTS'21}
+}
+
+@inproceedings{ResolFuzz,
+  author    = {Bushart, Jonas and Rossow, Christian},
+  editor    = {Tsudik, Gene and Conti, Mauro and Liang, Kaitai and Smaragdakis, Georgios},
+  title     = {ResolFuzz: Differential Fuzzing of DNS Resolvers},
+  booktitle = {Computer Security -- ESORICS 2023},
+  year      = {2024},
+  publisher = {Springer Nature Switzerland},
+  address   = {Cham},
+  pages     = {62--80},
+  abstract  = {This paper identifies and analyzes vulnerabilities in the DNS infrastructure, with particular focus on recursive DNS resolvers. We aim to identify semantic bugs that could lead to incorrect resolver responses, introducing risks to the internet's critical infrastructure. To achieve this, we introduce ResolFuzz, a mutation-based fuzzer to search for semantic differences across DNS resolver implementations. ResolFuzz combines differential analysis with a rule-based mechanism to distinguish between benign differences and potential threats. We evaluate our prototype on seven resolvers and uncover multiple security vulnerabilities, including inaccuracies in resolver responses and possible amplification issues in PowerDNS Recursor's handling of DNAME Resource Records (RRs). Moreover, we demonstrate the potential for self-sustaining DoS attacks in resolved and trust-dns, further underlining the necessity of comprehensive DNS security. Through these contributions, our research underscores the potential of differential fuzzing in uncovering DNS vulnerabilities.},
+  isbn      = {978-3-031-51476-0}
+}
+
+@mastersthesis{WASM,
+  author = {Hamidy, Gilang},
+  school = {Aalto University},
+  title  = {Differential Fuzzing the WebAssembly},
+  date   = {2020-08-18}
+}
+
+@inproceedings{UndefinedBehavior,
+  author    = {Li, Shaohua and Su, Zhendong},
+  title     = {Finding Unstable Code via Compiler-Driven Differential Testing},
+  year      = {2023},
+  isbn      = {9781450399180},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/3582016.3582053},
+  doi       = {10.1145/3582016.3582053},
+  abstract  = {Unstable code refers to code that has inconsistent or unstable run-time semantics due to undefined behavior (UB) in the program. Compilers exploit UB by assuming that UB never occurs, which allows them to generate efficient but potentially semantically inconsistent binaries. Practitioners have put great research and engineering effort into designing dynamic tools such as sanitizers for frequently occurring UBs. However, it remains a big challenge how to detect UBs that are beyond the reach of current techniques. In this paper, we introduce compiler-driven differential testing (CompDiff), a simple yet effective approach for finding unstable code in C/C++ programs. CompDiff relies on the fact that when compiling unstable code, different compiler implementations may produce semantically inconsistent binaries. Our main approach is to examine the outputs of different binaries on the same input. Discrepancies in outputs may signify the existence of unstable code. To detect unstable code in real-world programs, we also integrate CompDiff into AFL++, the most widely-used and actively-maintained general-purpose fuzzer. Despite its simplicity, CompDiff is effective in practice: on the Juliet benchmark programs, CompDiff uniquely detected 1,409 bugs compared to sanitizers; on 23 popular open-source C/C++ projects, CompDiff-AFL++ uncovered 78 new bugs, 52 of which have been fixed by developers and 36 cannot be detected by sanitizers. Our evaluation also reveals the fact that CompDiff is not designed to replace current UB detectors but to complement them.},
+  booktitle = {Proceedings of the 28th ACM International Conference on Architectural Support for Programming Languages and Operating Systems, Volume 3},
+  pages     = {238–251},
+  numpages  = {14},
+  keywords  = {unstable code, undefined behavior, compiler},
+  location  = {<conf-loc>, <city>Vancouver</city>, <state>BC</state>, <country>Canada</country>, </conf-loc>},
+  series    = {ASPLOS 2023}
+}
+
+@inproceedings{CompilerDL,
+  author    = {Cummins, Chris and Petoumenos, Pavlos and Murray, Alastair and Leather, Hugh},
+  title     = {Compiler fuzzing through deep learning},
+  year      = {2018},
+  isbn      = {9781450356992},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/3213846.3213848},
+  doi       = {10.1145/3213846.3213848},
+  abstract  = {Random program generation — fuzzing — is an effective technique for discovering bugs in compilers but successful fuzzers require extensive development effort for every language supported by the compiler, and often leave parts of the language space untested. We introduce DeepSmith, a novel machine learning approach to accelerating compiler validation through the inference of generative models for compiler inputs. Our approach infers a learned model of the structure of real world code based on a large corpus of open source code. Then, it uses the model to automatically generate tens of thousands of realistic programs. Finally, we apply established differential testing methodologies on them to expose bugs in compilers. We apply our approach to the OpenCL programming language, automatically exposing bugs with little effort on our side. In 1,000 hours of automated testing of commercial and open source compilers, we discover bugs in all of them, submitting 67 bug reports. Our test cases are on average two orders of magnitude smaller than the state-of-the-art, require 3.03\texttimes{} less time to generate and evaluate, and expose bugs which the state-of-the-art cannot. Our random program generator, comprising only 500 lines of code, took 12 hours to train for OpenCL versus the state-of-the-art taking 9 man months to port from a generator for C and 50,000 lines of code. With 18 lines of code we extended our program generator to a second language, uncovering crashes in Solidity compilers in 12 hours of automated testing.},
+  booktitle = {Proceedings of the 27th ACM SIGSOFT International Symposium on Software Testing and Analysis},
+  pages     = {95–105},
+  numpages  = {11},
+  keywords  = {Compiler Fuzzing, Deep Learning, Differential Testing},
+  location  = {Amsterdam, Netherlands},
+  series    = {ISSTA 2018}
+}

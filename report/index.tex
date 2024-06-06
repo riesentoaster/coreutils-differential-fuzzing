@@ -507,7 +507,7 @@ uutils-base64: error: invalid input
 
     libFuzzer is used as a fuzzing backend, which integrates with cargo and provides coverage instrumentation. However, the interface of libFuzzer is currently limited to the \code{fuzz_target} macro, which only supports input types in the shape of simple byte arrays. In the project in its current state, this input is not used in combination with differential fuzzing. For those programs, the input is manually randomly generated, thus loosing any advantage that coverage-guided fuzzing introduces.
 
-    Only for the non-differential fuzzers, the input provided by libFuzzer is used. 4 of 5 fuzzing binaries in this category do not test entire programs but instead imported parsing routines, with \code{date} being the only program from the coreutils suite where actual coverage-guided fuzzing is performed. The command line arguments are generated from the byte array input by splitting at \code{NULL} bytes. This is not a generally viable strategy, as is argued in Section~\ref{Environment}.
+    Only for the non-differential fuzzers, the input provided by libFuzzer is used. 4 of 5 fuzzing binaries in this category do not test entire programs but instead imported parsing routines, with \code{date} being the only program from the coreutils suite where actual coverage-guided fuzzing on a full program from coreutils is performed. The command line arguments are generated from the byte array input by splitting at \code{NULL} bytes. This is not a generally viable strategy, as is argued in Section~\ref{Environment}.
 
     Overall, compared to uutils' fuzzing sub-project, this work performs both coverage-guided and differential fuzzing at the same time, while utilizing the flexibility gained by building on top of LibAFL to increase performance and ensure environment protection and thus reliable testing.
 
@@ -549,6 +549,36 @@ uutils-base64: error: invalid input
     \end{itemize}
 
     \subsection{Differential Fuzzing}
+
+    Since differential fuzzing can only be performed on targets where two implementations are available that claim to include the exact same functionality, certain categories of such programs appear in literature.
+
+    \subsubsection{Network Protocols}
+
+    Since the interface of network protocols is need to be well-defined for compatibility of different systems, and the diverse ecosystem of network-attached systems produces multiple implementations of software stacks to handle such network protocols, this is an obvious target for differential fuzzing. Examples include testing Deep Packet Inspection (DPI) evasion for QUIC\cite{DPIFuzz}, errors in recursive DNS resolvers\cite{ResolFuzz}, or request smuggling through HTTP proxies\cite{T-Reqs}. ParDiff extracts finite state machines from different implementations of 14 network protocols and performs differential fuzzing to find errors in them.\cite{ParDiff}
+
+    \subsubsection{Cryptography Libraries}
+
+    Cryptography libraries are another target for differential fuzzing as the logic is well-defined and multiple implementations exist (in\cite{TLS}, 37 different implementations were tested). Examples include TLS handshake testing\cite{ExploitingDissent, TLS}, or TLS/SSL certificate validation\cite{NEZHA}.
+
+    \subsubsection{Compilers and Interpreters}
+
+    While different JavaScript engines contain too many differences between each other due to unspecified behavior, \citeauthor{JIT-Picking} compare the interpreter of different JavaScript engines to their just-in-time (JIT) compiler.\cite{JIT-Picking}
+
+    In\cite{JVM} and\cite{JVM2}, the authors test different Java Virtual Machine (JVM) implementations against each other to find 92 bugs in total. \citeauthor{WASM} tests different WebAssembly interpreters\cite{WASM} and \citeauthor{UndefinedBehavior} attempts to find undefined behavior based bugs in compilers\cite{UndefinedBehavior}. Another project trained a machine learning system to generate realistic programs as inputs for different compilers.\cite{CompilerDL}
+
+    Similarly, EVMFuzz compares different implementations of the Ethereum Virtual Machine.\cite{EVMFuzz} Fluffy attempts to create multi-transactional test cases for the Ethereum network that exploit consensus bugs in different implementations to trigger hard forks of the network.\cite{Fluffy} Other networks tested include the Neo blockchain in NeoDiff.\cite{NeoDiff}
+
+    \subsubsection{Regression Testing}
+
+    Differential fuzzing can also be employed in regression testing. This has the major upside of not requiring two different implementations of the same logic, because a program is tested against a different version of the same program. This obviously only works if the difference between the tested versions only includes performance improvements or other refactoring changes, as any functionality change or bugfix would be caught by the fuzzer. Examples include work done by \citeauthor{HyDiff}\cite{HyDiff}.
+
+    \subsubsection{Deep Learning}
+
+    Deep learning systems are still largely not understood. Ensuring reliable operation is becoming important as such systems are increasingly used in critical environments such as self-driving cars. While the same approach of comparing multiple similar tools can be applied to deep learning systems as well, in works such as by \citeauthor{DLFuzz}\cite{DLFuzz}, the term differential fuzzing refers to the technique of adding minor noise to an input and checking if a classifier model returns the same output for the original and altered input. Similar to what is done in this project, coverage-guided fuzzing can be employed on deep learning models as well by counting activated neurons instead of executed edges.
+
+    \subsubsection{Side-Channel Attacks}
+
+    Finally, a different form of differential fuzzing can be employed to discover side-channel attacks. By comparing the resource consumption (e.g. time, memory, or energy) of the same program using two different inputs and mutating these inputs to maximize the difference, information about the program state can be retrieved, as demonstrated in\cite{DifFuzz}.
 
     \section{Discussion}
 
@@ -607,8 +637,13 @@ uutils-base64: error: invalid input
 
     \subsection{Summary}
 
-    TODO: write
+    This project introduces a new greybox differential fuzzer for coreutils. It builds on top and includes many advanced algorithms implemented in LibAFL to generate inputs while ensuring a stable testing environment.
 
+    A new approach to transferring coverage information from a program executed as a separate process is used, where the programs under test are extended with an interface to dynamically access coverage information without any changes to the source code. By dynamically loading and linking helper binaries during execution, this system provides coverage information idiomatically to be read by LibAFL's coverage guidance modules.
+
+    While evaluation is currently only possible in a very limited fashion due to incomplete functionality in LibAFL, tests on \code{base64} already found a bug in GNU's coreutils, promising decent yields on more extended tests.
+
+    In the interest of open science, this project is released open-source. During development, hundreds of lines of code have been introduced to the upstream project, with further major changes already in discussion. The source code of the project is publicly available at \href{https://github.com/riesentoaster/coreutils-differential-fuzzing}{https://github.com/riesentoaster/coreutils-differential-fuzzing}.
 
     \defbibheading{bibliography}[\bibname]{\section*{#1}}
     \addcontentsline{toc}{section}{\bibname}
