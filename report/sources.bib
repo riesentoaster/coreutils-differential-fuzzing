@@ -206,7 +206,6 @@
   month     = aug
 }
 
-
 @article{Demystifying,
   author     = {Mallissery, Sanoop and Wu, Yu-Sung},
   title      = {Demystify the Fuzzing Methods: A Comprehensive Survey},
@@ -274,7 +273,7 @@
 
 @inproceedings{CLIFuzzer,
   author    = {Gupta, Abhilash and Gopinath, Rahul and Zeller, Andreas},
-  title     = {CLIFuzzer: mining grammars for command-line invocations},
+  title     = {{CLIFuzzer}: mining grammars for command-line invocations},
   year      = {2022},
   isbn      = {9781450394130},
   publisher = {Association for Computing Machinery},
@@ -303,7 +302,7 @@
 }
 @inproceedings{SEDiff,
   author    = {Li, Penghui and Meng, Wei and Lu, Kangjie},
-  title     = {SEDiff: scope-aware differential fuzzing to test internal function models in symbolic execution},
+  title     = {{SEDiff}: scope-aware differential fuzzing to test internal function models in symbolic execution},
   year      = {2022},
   isbn      = {9781450394130},
   publisher = {Association for Computing Machinery},
@@ -369,10 +368,9 @@
   doi       = {10.1109/APSEC57359.2022.00045}
 }
 
-
 @inproceedings{KLEE,
   author    = {Cadar, Cristian and Dunbar, Daniel and Engler, Dawson},
-  title     = {KLEE: unassisted and automatic generation of high-coverage tests for complex systems programs},
+  title     = {{KLEE}: unassisted and automatic generation of high-coverage tests for complex systems programs},
   year      = {2008},
   publisher = {USENIX Association},
   address   = {USA},
@@ -387,7 +385,7 @@
 @inproceedings{CRETE,
   author    = {Chen, Bo and Havlicek, Christopher and Yang, Zhenkun and Cong, Kai and Kannavara, Raghudeep and Xie, Fei},
   editor    = {Russo, Alessandra and Sch{\"u}rr, Andy},
-  title     = {CRETE: A Versatile Binary-Level Concolic Testing Framework},
+  title     = {{CRETE}: A Versatile Binary-Level Concolic Testing Framework},
   booktitle = {Fundamental Approaches to Software Engineering},
   year      = {2018},
   publisher = {Springer International Publishing},
@@ -396,7 +394,6 @@
   abstract  = {In this paper, we present crete, a versatile binary-level concolic testing framework, which features an open and highly extensible architecture allowing easy integration of concrete execution frontends and symbolic execution engine backends. crete's extensibility is rooted in its modular design where concrete and symbolic execution is loosely coupled only through standardized execution traces and test cases. The standardized execution traces are llvm-based, self-contained, and composable, providing succinct and sufficient information for symbolic execution engines to reproduce the concrete executions. We have implemented crete with klee as the symbolic execution engine and multiple concrete execution frontends such as qemu and 8051 Emulator. We have evaluated the effectiveness of crete on GNU Coreutils programs and TianoCore utility programs for UEFI BIOS. The evaluation of Coreutils programs shows that crete achieved comparable code coverage as klee directly analyzing the source code of Coreutils and generally outperformed angr. The evaluation of TianoCore utility programs found numerous exploitable bugs that were previously unreported.},
   isbn      = {978-3-319-89363-1}
 }
-
 
 @inproceedings{IMF-SIM,
   author    = {Wang, Shuai and Wu, Dinghao},
@@ -426,26 +423,6 @@
   keywords  = {fuzzing, machine learning, program testing, symbolic execution},
   location  = {Virtual Event, Republic of Korea},
   series    = {CCS '21}
-}
-
-@article{10.1145/2345156.2254088,
-  author     = {Kuznetsov, Volodymyr and Kinder, Johannes and Bucur, Stefan and Candea, George},
-  title      = {Efficient state merging in symbolic execution},
-  year       = {2012},
-  issue_date = {June 2012},
-  publisher  = {Association for Computing Machinery},
-  address    = {New York, NY, USA},
-  volume     = {47},
-  number     = {6},
-  issn       = {0362-1340},
-  url        = {https://doi.org/10.1145/2345156.2254088},
-  doi        = {10.1145/2345156.2254088},
-  abstract   = {Symbolic execution has proven to be a practical technique for building automated test case generation and bug finding tools. Nevertheless, due to state explosion, these tools still struggle to achieve scalability. Given a program, one way to reduce the number of states that the tools need to explore is to merge states obtained on different paths. Alas, doing so increases the size of symbolic path conditions (thereby stressing the underlying constraint solver) and interferes with optimizations of the exploration process (also referred to as search strategies). The net effect is that state merging may actually lower performance rather than increase it.We present a way to automatically choose when and how to merge states such that the performance of symbolic execution is significantly increased. First, we present query count estimation, a method for statically estimating the impact that each symbolic variable has on solver queries that follow a potential merge point; states are then merged only when doing so promises to be advantageous. Second, we present dynamic state merging, a technique for merging states that interacts favorably with search strategies in automated test case generation and bug finding tools.Experiments on the 96 GNU Coreutils show that our approach consistently achieves several orders of magnitude speedup over previously published results. Our code and experimental data are publicly available at http://cloud9.epfl.ch.},
-  journal    = {SIGPLAN Not.},
-  month      = {jun},
-  pages      = {193–204},
-  numpages   = {12},
-  keywords   = {verification, testing, symbolic execution, state merging, bounded software model checking}
 }
 
 @inproceedings{Cloud9,

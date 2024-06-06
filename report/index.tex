@@ -39,6 +39,7 @@
     mincitenames=1
 ]{biblatex}
 \addbibresource{sources.bib}
+\renewcommand*{\bibfont}{\footnotesize}
 \usepackage{multicol}
 \setlength{\columnsep}{13mm}
 \usepackage{hypcap}
@@ -557,17 +558,14 @@ uutils-base64: error: invalid input
     \label{ResearchQuestionsDiscussion}
     Section~\ref{ResearchQuestions} introduced a series of questions to be answered in this work. Here is a summary of what was found.
 
-    In principle, everything in coreutils can be tested by a fuzzer. However, based on the interface information in Section~\ref{CoreutilsInterface} and the considerations on environment protection in Section~\ref{Environment}, a fuzzer whose goal complete coverage is needs to introduce a computationally expensive layer to record environmental changes and prevent their persistence across executions of the program under test. Additionally, a layer to emulate failing system interactions (such as broken pipes) needs to be introduces. The performance cost of these layers make them infeasible to use in testing without large compute resources. Additionally, as was shown in Section~\ref{Errors}, even a fuzzer without these capabilities can find software defects and is thus worth pursuing.
-
-    This work further introduces a novel approach to LibAFL to gather coverage information from a binary called in a child process. Sections~\ref{CoverageGNU} and~\ref{Coverageuutils} describe how edge coverage is gathered by logic statically compiled into the binary under test and extracted by dynamically loaded libraries, transparent to the program under test.
-
-    The fuzzer built in this project makes extensive use of LibAFL's features, including idiomatic usage of LibAFL's internal representation of coverage information (see Section~\ref{LibAFLCoverageInterface}), usage of advanced algorithms as provided by LibAFL (see Section~\ref{Optimizations} and~\ref{AdvancedLibAFLModules}), and experiments on custom \code{Input} types (as described in Section~\ref{CustomInputType} and discussed in Section~\ref{CustomInputTypeLimitations}).
-
-    A non-differential fuzzer can only find bugs that trigger states that are easily distinguishable from normal operation. Section~\ref{DifferentialFuzzing} explains why this in practice reduces the discoverable errors to those that either crash the program under test or produce timeouts. Section~\ref{IndividualFuzzers} shows that even long evaluation runs on \code{base64} did not discover any such bugs.
-
-    Section~\ref{DifferentialFuzzingCode} lists existing functionality in LibAFL used in the fuzzer in its differential mode, along with custom extensions introduced during this project. Because of LibAFL's modular design, running two \code{Executor}s in parallel, including all their respective \code{Observer}s, and introducing \code{Feedback}s comparing their output is not only possible but becomes an engineering task of limited difficulty.
-
-    Finally, the fuzzer in its differential mode finds nontrivial logic errors in the different implementations, undiscoverable by its non-differential mode. It explores all program parts except for those excluded based on environmental protection reasons as described above.
+    \begin{enumerate}
+        \item In principle, everything in coreutils can be tested by a fuzzer. However, based on the interface information in Section~\ref{CoreutilsInterface} and the considerations on environment protection in Section~\ref{Environment}, a fuzzer whose goal complete coverage is needs to introduce a computationally expensive layer to record environmental changes and prevent their persistence across executions of the program under test. Additionally, a layer to emulate failing system interactions (such as broken pipes) needs to be introduces. The performance cost of these layers make them infeasible to use in testing without large compute resources. Additionally, as was shown in Section~\ref{Errors}, even a fuzzer without these capabilities can find software defects and is thus worth pursuing.
+        \item This work further introduces a novel approach to LibAFL to gather coverage information from a binary called in a child process. Sections~\ref{CoverageGNU} and~\ref{Coverageuutils} describe how edge coverage is gathered by logic statically compiled into the binary under test and extracted by dynamically loaded libraries, transparent to the program under test.
+        \item The fuzzer built in this project makes extensive use of LibAFL's features, including idiomatic usage of LibAFL's internal representation of coverage information (see Section~\ref{LibAFLCoverageInterface}), usage of advanced algorithms as provided by LibAFL (see Section~\ref{Optimizations} and~\ref{AdvancedLibAFLModules}), and experiments on custom \code{Input} types (as described in Section~\ref{CustomInputType} and discussed in Section~\ref{CustomInputTypeLimitations}).
+        \item A non-differential fuzzer can only find bugs that trigger states that are easily distinguishable from normal operation. Section~\ref{DifferentialFuzzing} explains why this in practice reduces the discoverable errors to those that either crash the program under test or produce timeouts. Section~\ref{IndividualFuzzers} shows that even long evaluation runs on \code{base64} did not discover any such bugs.
+        \item Section~\ref{DifferentialFuzzingCode} lists existing functionality in LibAFL used in the fuzzer in its differential mode, along with custom extensions introduced during this project. Because of LibAFL's modular design, running two \code{Executor}s in parallel, including all their respective \code{Observer}s, and introducing \code{Feedback}s comparing their output is not only possible but becomes an engineering task of limited difficulty.
+        \item Finally, the fuzzer in its differential mode finds nontrivial logic errors in the different implementations, undiscoverable by its non-differential mode. It explores all program parts except for those excluded based on environmental protection reasons as described above.
+    \end{enumerate}
 
     \subsection{Contributions}
     \label{Contributions}
