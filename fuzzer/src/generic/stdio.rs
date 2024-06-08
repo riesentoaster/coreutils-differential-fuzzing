@@ -27,6 +27,7 @@ pub struct DiffStdIOMetadataPseudoFeedback {
     stderr_observer2: Handle<StdErrObserver>,
     stdout_observer1: Handle<StdOutObserver>,
     stdout_observer2: Handle<StdOutObserver>,
+    exit_kind: Option<ExitKind>,
 }
 
 impl DiffStdIOMetadataPseudoFeedback {
@@ -46,6 +47,7 @@ impl DiffStdIOMetadataPseudoFeedback {
             stderr_observer2: stderr_observer2.handle(),
             stdout_observer1: stdout_observer1.handle(),
             stdout_observer2: stdout_observer2.handle(),
+            exit_kind: None,
         }
     }
 }
@@ -61,12 +63,13 @@ where
         _manager: &mut EM,
         _input: &S::Input,
         _observers: &OT,
-        _exit_kind: &ExitKind,
+        exit_kind: &ExitKind,
     ) -> Result<bool, Error>
     where
         EM: EventFirer<State = S>,
         OT: ObserversTuple<S>,
     {
+        self.exit_kind = Some(*exit_kind);
         Ok(false)
     }
 
@@ -96,6 +99,10 @@ where
 
         let input = testcase.input().as_ref().map(|e| e.to_string());
 
+        let exit_kind_string = self
+            .exit_kind
+            .map_or("No ExitKind recorded".to_string(), |e| format!("{:?}", e));
+
         testcase
             .metadata_map_mut()
             .insert(DiffStdIOMetadataPseudoFeedbackMetadata {
@@ -106,6 +113,7 @@ where
                 stderr_observer2: vec_string_mapper(&f(&self.stderr_observer2, observers)?.stderr),
                 stdout_observer1: vec_string_mapper(&f(&self.stdout_observer1, observers)?.stdout),
                 stdout_observer2: vec_string_mapper(&f(&self.stdout_observer2, observers)?.stdout),
+                exit_kind: exit_kind_string,
             });
         Ok(())
     }
@@ -122,6 +130,7 @@ struct DiffStdIOMetadataPseudoFeedbackMetadata {
     input: Option<String>,
     name1: String,
     name2: String,
+    exit_kind: String,
     stderr_observer1: String,
     stderr_observer2: String,
     stdout_observer1: String,
