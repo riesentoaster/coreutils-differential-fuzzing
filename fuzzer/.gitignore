@@ -1,3 +1,5 @@
 /target
 /crashes*
+/corpus*
 *.log
+*.gcov

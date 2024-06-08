@@ -172,3 +172,11 @@ script_runner = "@shell"
 script = '''
 ./${CARGO_TARGET_DIR}/${PROFILE_DIR}/coreutils_differential --output crashes --stdout out.log ${@}
 '''
+
+[tasks.gcov]
+script_runner = "@shell"
+script = '''
+cd ${CARGO_TARGET_DIR}/GNU_coreutils_coverage/
+gcov src/base64-basenc
+cp *.gcov ../..
+'''
