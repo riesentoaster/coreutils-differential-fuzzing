@@ -20,6 +20,7 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "differential")]
 use libafl_bolts::tuples::Handled;
 
+#[derive(Clone)]
 pub struct DiffStdIOMetadataPseudoFeedback {
     name1: Cow<'static, str>,
     name2: Cow<'static, str>,

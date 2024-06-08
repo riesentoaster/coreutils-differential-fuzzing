@@ -12,7 +12,7 @@ use generic::{
 };
 
 use libafl::{
-    corpus::{InMemoryCorpus, OnDiskCorpus},
+    corpus::OnDiskCorpus,
     events::{EventConfig, Launcher, LlmpRestartingEventManager},
     feedback_or_fast,
     feedbacks::{AflMapFeedback, CrashFeedback, DiffExitKindFeedback, TimeoutFeedback},
@@ -202,18 +202,24 @@ fn fuzz(util: &str) -> Result<(), Error> {
                 format!("cov-{:?}", core_id.0),
             );
 
-            let feedback = feedback_and_fast!(
-                MaxMapFeedback::new(&combined_coverage_observer),
-                gcov_feedback
+            let metadata_pseudo_feedback = DiffStdIOMetadataPseudoFeedback::new(
+                &uutils_path,
+                &gnu_path,
+                &uutils_stderr_observer,
+                &gnu_stderr_observer,
+                &uutils_stdout_observer,
+                &gnu_stdout_observer,
+            );
 
             let coverage_feedback = AflMapFeedback::new(&combined_coverage_observer);
 
             let feedback = feedback_or_fast!(
                 feedback_and_fast!(coverage_feedback, gcov_feedback),
+                metadata_pseudo_feedback.clone()
             );
 
             // only add logger feedbacks if something was found
-            let objective = feedback_and!(
+            let objective = feedback_and_fast!(
                 feedback_or_fast!(
                     // only test stdout equality if neither has a stderr
                     DiffExitKindFeedback::new(),
@@ -222,14 +228,7 @@ fn fuzz(util: &str) -> Result<(), Error> {
                     feedback_and_fast!(stderr_neither_feedback, stdout_diff_feedback) // ,stderr_xor_feedback
                 ),
                 feedback_or!(
-                    DiffStdIOMetadataPseudoFeedback::new(
-                        &uutils_path,
-                        &gnu_path,
-                        &uutils_stderr_observer,
-                        &gnu_stderr_observer,
-                        &uutils_stdout_observer,
-                        &gnu_stdout_observer,
-                    ),
+                    metadata_pseudo_feedback,
                     TimeFeedback::new(&uutils_time_observer),
                     TimeFeedback::new(&gnu_time_observer),
                     ConstFeedback::new(true) // to ensure the whole block to be interesting
@@ -260,7 +259,7 @@ fn fuzz(util: &str) -> Result<(), Error> {
         let mut state = state.unwrap_or_else(|| {
             StdState::new(
                 StdRand::with_seed(current_nanos()),
-                InMemoryCorpus::new(),
+                OnDiskCorpus::new(PathBuf::from("corpus")).unwrap(),
                 OnDiskCorpus::new(PathBuf::from(&options.output)).unwrap(),
                 &mut feedback,
                 &mut objective,
