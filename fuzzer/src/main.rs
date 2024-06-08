@@ -153,29 +153,43 @@ fn fuzz(util: &str) -> Result<(), Error> {
                 },
             )?;
 
-            let stderr_xor_feedback = DiffFeedback::new(
-                "stderr-eq-diff-feedback",
-                &uutils_stderr_observer,
-                &gnu_stderr_observer,
-                |o1, o2| {
-                    if has_stderr(o1) != has_stderr(o2) {
-                        DiffResult::Diff
-                    } else {
-                        DiffResult::Equal
-                    }
-                },
-            )?;
+            // let stderr_xor_feedback = DiffFeedback::new(
+            //     "stderr-eq-diff-feedback",
+            //     &uutils_stderr_observer,
+            //     &gnu_stderr_observer,
+            //     |o1, o2| {
+            //         if let Some(r1) = has_stderr(o1) {
+            //             if let Some(r2) = has_stderr(o2) {
+            //                 if r1 == r2 {
+            //                     return DiffResult::Equal;
+            //                 }
+            //             } else {
+            //                 println!("XOR: No stderr for GNU");
+            //             }
+            //         } else {
+            //             println!("XOR: No stderr for uutils");
+            //         }
+            //         DiffResult::Diff
+            //     },
+            // )?;
 
             let stderr_neither_feedback = DiffFeedback::new(
                 "stderr-neither-diff-feedback",
                 &uutils_stderr_observer,
                 &gnu_stderr_observer,
                 |o1, o2| {
-                    if !has_stderr(o1) && !has_stderr(o2) {
-                        DiffResult::Diff // trigger the feedback
+                    if let Some(r1) = has_stderr(o1) {
+                        if let Some(r2) = has_stderr(o2) {
+                            if !r1 && !r2 {
+                                return DiffResult::Diff; // trigger the feedback
+                            }
+                        } else {
+                            println!("DIFF: No stderr for GNU");
+                        }
                     } else {
-                        DiffResult::Equal
+                        println!("DIFF: No stderr for uutils");
                     }
+                    DiffResult::Equal
                 },
             )?;
 
@@ -333,6 +347,6 @@ fn fuzz(util: &str) -> Result<(), Error> {
         .launch()
 }
 
-pub fn has_stderr(o: &StdErrObserver) -> bool {
-    o.stderr.as_ref().map_or(false, |e| !e.is_empty())
+pub fn has_stderr(o: &StdErrObserver) -> Option<bool> {
+    o.stderr.as_ref().map(|e| !e.is_empty())
 }
