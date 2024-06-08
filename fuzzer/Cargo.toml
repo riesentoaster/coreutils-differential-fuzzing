@@ -15,7 +15,7 @@ members = ["get_guard_num", "setup_guard_redirection"]
 debug = true
 
 [features]
-default = ["differential"]
+default = ["differential", "tui"]
 gnu = []
 uutils = []
 differential = ["gnu", "uutils"]
