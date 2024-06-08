@@ -15,9 +15,11 @@ use libafl::{
     corpus::{InMemoryCorpus, OnDiskCorpus},
     events::{EventConfig, Launcher, LlmpRestartingEventManager},
     feedback_or_fast,
-    feedbacks::{CrashFeedback, DiffExitKindFeedback, MaxMapFeedback, TimeoutFeedback},
+    feedbacks::{AflMapFeedback, CrashFeedback, DiffExitKindFeedback, TimeoutFeedback},
     mutators::StdMOptMutator,
-    observers::{StdErrObserver, StdMapObserver, StdOutObserver, TimeObserver},
+    observers::{
+        HitcountsIterableMapObserver, StdErrObserver, StdMapObserver, StdOutObserver, TimeObserver,
+    },
     schedulers::{powersched::PowerSchedule, StdWeightedScheduler},
     stages::StdMutationalStage,
     state::StdState,
@@ -39,7 +41,7 @@ use {
     generic::stdio::DiffStdIOMetadataPseudoFeedback,
     libafl::{
         executors::DiffExecutor,
-        feedback_and, feedback_and_fast, feedback_or,
+        feedback_and_fast, feedback_or,
         feedbacks::{differential::DiffResult, ConstFeedback, DiffFeedback, TimeFeedback},
         observers::MultiMapObserver,
     },
@@ -99,7 +101,7 @@ fn fuzz(util: &str) -> Result<(), Error> {
             get_shmem(gnu_coverage_shmem_size)?;
 
         #[cfg(feature = "differential")]
-        let combined_coverage_observer =
+        let combined_coverage_observer = HitcountsIterableMapObserver::new(
             MultiMapObserver::differential("combined-coverage", unsafe {
                 vec![
                     OwnedMutSlice::from_raw_parts_mut(
@@ -111,7 +113,8 @@ fn fuzz(util: &str) -> Result<(), Error> {
                         gnu_coverage_shmem.len(),
                     ),
                 ]
-            });
+            }),
+        );
 
         #[cfg(feature = "uutils")]
         let uutils_stdout_observer = StdOutObserver::new("uutils-stdout-observer");
@@ -202,6 +205,11 @@ fn fuzz(util: &str) -> Result<(), Error> {
             let feedback = feedback_and_fast!(
                 MaxMapFeedback::new(&combined_coverage_observer),
                 gcov_feedback
+
+            let coverage_feedback = AflMapFeedback::new(&combined_coverage_observer);
+
+            let feedback = feedback_or_fast!(
+                feedback_and_fast!(coverage_feedback, gcov_feedback),
             );
 
             // only add logger feedbacks if something was found
@@ -211,8 +219,7 @@ fn fuzz(util: &str) -> Result<(), Error> {
                     DiffExitKindFeedback::new(),
                     CrashFeedback::new(),
                     TimeoutFeedback::new(),
-                    feedback_and_fast!(stderr_neither_feedback, stdout_diff_feedback),
-                    stderr_xor_feedback
+                    feedback_and_fast!(stderr_neither_feedback, stdout_diff_feedback) // ,stderr_xor_feedback
                 ),
                 feedback_or!(
                     DiffStdIOMetadataPseudoFeedback::new(
@@ -240,13 +247,13 @@ fn fuzz(util: &str) -> Result<(), Error> {
                 format!("cov-{:?}", core_id.0),
             );
             let feedback =
-                feedback_and_fast!(MaxMapFeedback::new(&gnu_coverage_observer), gcov_feedback);
+                feedback_and_fast!(AflMapFeedback::new(&gnu_coverage_observer), gcov_feedback);
             let objective = feedback_or_fast!(CrashFeedback::new(), TimeoutFeedback::new());
             (feedback, objective)
         };
         #[cfg(all(not(feature = "differential"), feature = "uutils"))]
         let (mut feedback, mut objective) = {
-            let feedback = MaxMapFeedback::new(&uutils_coverage_observer);
+            let feedback = AflMapFeedback::new(&uutils_coverage_observer);
             let objective = feedback_or_fast!(CrashFeedback::new(), TimeoutFeedback::new());
             (feedback, objective)
         };
