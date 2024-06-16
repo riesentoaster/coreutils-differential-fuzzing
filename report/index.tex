@@ -439,7 +439,39 @@ uutils-base64: error: invalid input
 
     \subsection{Performance}
 
-    Across 64 fully loaded cores of an AMD EPYC 7713 with 64~GB of RAM, the complete fuzzer in its differential fuzzing modes achieves approximately 1500 executions per second.
+    Across 64 fully loaded cores of an AMD EPYC 7713 with 64~GB of RAM, the complete fuzzer in its differential fuzzing modes achieves approximately 6000 executions per second. To reduce the impact of bottlenecks from starting many processes, the following experiments are run on single-core instances.
+
+    \subsubsection{Performance Implications of Individual Parts}
+
+    The fuzzer, as described in Section~\ref{Implementation}, contains multiple parts that may contribute to the overall runtime of a single fuzzer execution. LibAFL contains performance collection code, which the results in Listing~\ref{listing:LibAFLIntrospection} and shows that the vast majority of runtime is contributed by the target execution. The remaining measured expensive functions are the mutations, since many are executed on each run, and coverage handling, which in total contribute less than 0.5~\% to the runtime of the fuzzer.
+
+    \begin{lstlisting}
+Client 001:
+  0.0000: Scheduler
+  0.0000: Manager
+  Stage 0:
+    0.0000: GetInputFromCorpus
+    0.0005: Mutate
+    0.0000: MutatePostExec
+    0.9957: TargetExecution
+    0.0000: PreExecObservers
+    0.0017: PostExecObservers
+  Feedbacks:
+    0.0000: DiffExitKindFeedback
+    0.0015: CombinedCoverage
+    0.0000: DiffStdioMetadataPseudoFeedback
+    0.0000: StderrNeitherDiffFeedback
+    0.0000: TimeoutFeedback
+    0.0000: CrashFeedback
+    0.0000: StdoutEqDiffFeedback
+  0.0005: Not Measured
+\end{lstlisting}
+    \captionof{listing}{Output from LibAFL's Introspection Modules}
+    \label{listing:LibAFLIntrospection}
+
+    The fuzzer in its full differential mode on a single thread reports approximately 250 executions per second, or about a runtime of 0.04~s per execution.
+
+
 
     TODO: Compare this number with simple invocations of un-instrumented coreutils to find out how much overhead the fuzzer including all its part actually introduces. Also consider LibAFL's (scalability) performance insight module.
 
