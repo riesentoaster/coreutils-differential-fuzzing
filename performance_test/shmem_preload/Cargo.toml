@@ -1,0 +1,15 @@
+[package]
+name = "shmem_preload"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "shmem_preload"
+crate_type = ["cdylib"]
+
+[dependencies]
+libc = "0.2"
+libafl_bolts = { path = "../../LibAFL/libafl_bolts" }
+serde_json = "*"

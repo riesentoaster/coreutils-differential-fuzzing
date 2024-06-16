@@ -4,6 +4,10 @@
 
 Read the report [here](./report/out/index.pdf). Its artifacts are in the `report` subdirectory.
 
+## Performance Tests
+
+Code to perform performance tests outside of the fuzzer and their results can be found in [performance_test](./performance_test/).
+
 ## Fuzzer
 
 This project is written in rust/cargo (make sure you have a [current version installed](https://doc.rust-lang.org/cargo/getting-started/installation.html)) and uses [cargo make](https://sagiegurari.github.io/cargo-make/) to document and automate the build steps.
