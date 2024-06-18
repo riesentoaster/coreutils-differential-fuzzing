@@ -4,6 +4,8 @@ import pandas as pd
 
 df = pd.read_csv("../performance_test/res.csv", sep=";", header="infer")
 suptitle_fontsize = 16
+figsize = (6, 4)
+dpi = 500
 
 grouped_dfs = {key: group for key, group in df.groupby("figure_name")}
 for k, d in grouped_dfs.items():
@@ -16,7 +18,7 @@ def print_scatter(title, filename, df, ylabel, xlabel):
     df = df.melt(id_vars="series_name")
     df["series_name"] = df["series_name"].astype("int64")
     df = df.drop(columns="variable")
-    fig, ax = plt.subplots(1, 1, figsize=(10, 7), dpi=300)
+    fig, ax = plt.subplots(1, 1, figsize=figsize, dpi=dpi)
     ax.scatter(df["series_name"], df["value"], marker=".", color="green")
     ax.set_ylabel(ylabel)
     ax.set_xlabel(xlabel)
@@ -45,8 +47,8 @@ print_scatter(
 )
 
 print_scatter(
-    "Time to Allocate, Persist, Fill, and Read a Shared Memory Segment Across Sizes",
-    "simple_shmem_persist_fill_check",
+    "Time to Use a Shared Memory Segment Across Sizes",
+    "shmem",
     grouped_dfs["simple_shmem_persist_fill_check"],
     "Time for 10000 Iterations (s)",
     "Shared Memory Size (Bytes)",
@@ -59,7 +61,7 @@ def print_boxplot(title, filename, df, ylabel):
     df.columns = df.iloc[0]
     df = df[1:].reset_index(drop=True)
     df = df.astype("float64")
-    fig, ax = plt.subplots(1, 1, figsize=(10, 7), dpi=300)
+    fig, ax = plt.subplots(1, 1, figsize=figsize, dpi=dpi)
     df.boxplot(column=list(df.columns), ax=ax, color="green")
     ax.set_ylabel(ylabel)
     ax.grid(axis="y")
@@ -69,14 +71,14 @@ def print_boxplot(title, filename, df, ylabel):
 
 
 print_boxplot(
-    r"Performance of Different $\mathtt{stdin}$ Options",
+    r"Performance of $\mathtt{stdin}$ Options",
     "stdin_types",
     grouped_dfs["stdin_types"],
     "Time for 10000 Iterations (s)",
 )
 
 print_boxplot(
-    r"Performance implications of $\mathtt{LD\_PRELOAD}$ Options",
+    r"Performance of $\mathtt{LD\_PRELOAD}$ Options",
     "preloads",
     grouped_dfs["preloads"],
     "Time for 10000 Iterations (s)",
@@ -84,7 +86,7 @@ print_boxplot(
 
 
 def print_boxplots_instrumentation(title, filename, ax_titles, dfs, ylabel):
-    fig, axes = plt.subplots(1, len(dfs), figsize=(10, 7), dpi=300)
+    fig, axes = plt.subplots(1, len(dfs), figsize=figsize, dpi=dpi)
     axes[0].set_ylabel(ylabel)
     for ax, df, ax_title in zip(axes, dfs, ax_titles):
         df = df.transpose()
@@ -102,7 +104,7 @@ def print_boxplots_instrumentation(title, filename, ax_titles, dfs, ylabel):
 
 
 print_boxplots_instrumentation(
-    r"Performance implications of Coverage Instrumentation",
+    r"Performance of Coverage Instrumentation",
     "instrumentation",
     ["No Instrumentation", "GNU", "uutils"],
     [
