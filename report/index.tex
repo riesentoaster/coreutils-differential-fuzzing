@@ -554,7 +554,23 @@ Client 001:
     \label{Errors}
     In an evaluation run spanning 24 hours and encompassing nearly 100 million executions, the fuzzer was unable to identify any errors in \code{base64} from either version of coreutils, neither in its individual or differential mode. However, GNU's version of \code{base64} comprises 161 lines of code according to \code{gcov} including its user interface. Given its extensive usage and the number of individual who have tested the code, it is highly improbable that there are any errors in the code base to begin with.
 
-    % TODO: Inject bugs
+    To assess the efficacy of this fuzzer in identifying logic errors, an artificial bug was introduced into the source code of GNU's version of \code{base64} (see Listing~\ref{listing:artificial-bug}). This bug does not result in the program crashing or entering a state that would be flagged as a bug by conventional fuzzers. The fuzzer developed in this project identified this bug within minutes on multiple runs. This demonstrates that even bugs that have complex requirements on the input that trigger them can be found with this approach.
+
+    \begin{lstlisting}[language=C]
+void base64_encode(const char *restrict in, idx_t inlen, char *restrict out, idx_t outlen)
+{
+    if (inlen == 3)
+        if (in[0] == 'a')
+            if (in[1] == 'b')
+                if (in[2] == 'c')
+                    printf("Hello, World!");
+
+    [remaining function code]
+}
+\end{lstlisting}
+    \captionof{listing}{Inserted Artificial Bug}
+    \label{listing:artificial-bug}
+
 
     \section{State of the Art}
     \label{StateOfTheArt}
