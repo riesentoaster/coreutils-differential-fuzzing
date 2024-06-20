@@ -137,7 +137,7 @@
     \subsection{LibAFL}
     \label{LibAFLHistory}
 
-    American Fuzzy Lop (AFL)\cite{AFL} was an early comprehensive open source fuzzing tool used in countless projects and academic papers to find an impressive list of software bugs and vulnerabilities\cite{AFLBugs}. After it ceased to be updated in November 2017, the fork AFL++\cite{AFLPlusPlus} has become the de facto replacement.
+    American Fuzzy Lop (AFL)\cite{AFL} was an early comprehensive open source fuzzing tool used in countless projects and academic papers. By combining compile-time coverage instrumentation and genetic mutation of inputs that triggered new code paths, it proved to be a very effective at finding software bugs and vulnerabilities\cite{AFLBugs}. After it ceased to be updated in November 2017, the fork AFL++\cite{AFLPlusPlus} has become the de facto replacement.
 
     However, while enhancements to AFL++ have been introduced in many academic and commercial projects, due to the architecture of AFL++, these enhancements have usually not been merged back into AFL++. The result is a list of incompatible forks, each with a proven improvement that makes the fuzzer more effective at its job.\cite{LibAFL} Because of this, the maintainers of AFL++ have started a new project: LibAFL. It aims to provide a toolkit for building fuzzers that is flexible enough to allow the combination of all these improvements. Refer to Section~\ref{LibAFLBackground} for more details on LibAFL. This work uses LibAFL to build a fuzzer aimed at finding software bugs in coreutils.
 
@@ -436,7 +436,7 @@ For more information, try '--help'.
 
     Because of this, in its differential mode, the fuzzer reduces the information from the \code{stderr} of each process to a check for \textit{any} output. It reports an error if either implementation returns any data on \code{stderr} and the other does not, or if both do not print any data to \code{stderr} but print different data to \code{stdout}.
 
-    The latter restriction is required due to implementation details: In \code{base64}, GNU's version prints valid bytes during the decoding process and, once it encounters invalid data, prints an error message. In contrast,uutils' version parses the entire input and before printing the output or error message. An example output can be found in Listings~\ref{listing:ErrorPartialOutputGNU} and~\ref{listing:ErrorPartialOutputuutils}.
+    The latter restriction was discovered by an intermediate version of the differential fuzzer. It is required due to an implementation detail: In \code{base64}, GNU's version prints valid bytes during the decoding process and, once it encounters invalid data, prints an error message. In contrast,uutils' version parses the entire input and before printing the output or error message. An example output can be found in Listings~\ref{listing:ErrorPartialOutputGNU} and~\ref{listing:ErrorPartialOutputuutils}.
 
     \begin{lstlisting}
 $ echo "aa" | gnu-base64 --decode
