@@ -548,7 +548,11 @@ Client 001:
     \subsubsection{Performance on Individual Implementations}
     \label{IndividualFuzzers}
 
-    %  TODO: Compare performance on GNU vs. performance on uutils vs. performance on both
+    The fuzzer is constructed in a manner that allows it to be run on a single implementation. As described in Sections~\ref{IntroductionDifferentialFuzzing} and~\ref{DifferentialFuzzing}, this reduces the kind of software error that can be found to those that result in the program under test crashing. Given that the runtime of \code{base64} it is not possible to discover infinite loops based on program runtime, since the execution timeout would need to be impractically long to ensure the absence of false positives.
+
+    As anticipated from the experiments shown in Figure~\ref{fig:coverage-instrumentation}, the fuzzer performed significantly better on GNU's version of coreutils, achieving a 5.1 times higher execution rate. The discrepancy in the execution speed between the fuzzer and manual tests can be attributed to the additional computational processes inherent to the fuzzer, such as coverage analysis. The enhanced child process management in  \code{CommandExecutor}, as employed by the fuzzer, further optimises the execution speed, reaching a point where the fuzzer achieved almost twice the execution count compared to manual tests within the same time frame.
+
+    The fuzzer did not identify any input that could cause crashing errors in either the GNU or uutils versions of coreutils.
 
     \subsection{Discovered Errors}
     \label{Errors}
