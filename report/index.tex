@@ -104,12 +104,6 @@
 
     \begin{minipage}{0.7\textwidth}
         \textbf{Keywords}: Software Testing, Fuzzing, Differential Fuzzing, coreutils, LibAFL.
-        \\\\\\Global TODOs:
-        \begin{itemize}
-            \item TODO: Add n.d. as year entry for bib entries that don't have a date. (Search for "()" in the PDF)
-            \item TODO: Fix page breaks before captions
-            \item TODO: Position LibAFL architecture diagram where it makes sense to fix multicols reset.
-        \end{itemize}
     \end{minipage}
 \end{center}
 
@@ -210,16 +204,19 @@
     As previously outlined in Section~\ref{LibAFLHistory}, LibAFL is an extendible framework for the construction of custom fuzzers. This section will provide a brief introduction to the fundamental concepts and components of LibAFL that are essential for an understanding of this project. For a more comprehensive examination, the authors direct the reader to the original LibAFL paper\cite{LibAFL}.
 
     \subsubsection{Generic Concepts}
-    The core insight of the authors of LibAFL is that the majority of fuzzers contain highly similar components, with advancements in new works typically occurring in only a few of the fundamental fuzzer parts. This logic is typically introduced into a fork of an existing fuzzer (such as AFL++), which is then abandoned without the advancements being collected in a way that allows them to be reusable and combinable in later projects. An alternative approach is to create a new system from scratch, which introduces a significant amount of duplicate work and code that may not be as optimised as possible. This is because fuzzer parts such as thread synchronisation are not typically the focus of new works.
+    The core insight of the authors of LibAFL is that the majority of fuzzers contain highly similar components, with advancements in new works typically occurring in only a few of the fundamental fuzzer parts.
 
 \end{multicols}
-\begin{figure}[htbp]
+\vspace{1em}
+\begin{figure}[b]
     \centering
     \includegraphics[width=\textwidth]{assets/LibAFLArchitecture.png}
     \caption{LibAFL's Architecture\cite{LibAFL}}
     \label{fig:LibAFLArchitecture}
 \end{figure}
 \begin{multicols}{2}
+
+    This logic is typically introduced into a fork of an existing fuzzer (such as AFL++), which is then abandoned without the advancements being collected in a way that allows them to be reusable and combinable in later projects. An alternative approach is to create a new system from scratch, which introduces a significant amount of duplicate work and code that may not be as optimised as possible. This is because fuzzer parts such as thread synchronisation are not typically the focus of new works.
 
     The authors of LibAFL conducted a comprehensive examination of recent innovations in fuzzing and identified a set of distinct parts present in numerous fuzzers. They then designed the architecture of LibAFL in such a way that authors can modify only the parts they are interested in while relying on a well-optimised default implementation for everything else. Figure~\ref{fig:LibAFLArchitecture} illustrates the identified fuzzer parts and their interaction, as implemented in LibAFL. The authors of LibAFL re-implemented the logic introduced in 20 high-impact works to demonstrate that the system is flexible enough to handle logic created independently of their system. Finally, they showed that it is now trivial to combine advancements made in different works (i.e. combining the input scheduler of one work with new feedback types introduced in another).
 
@@ -305,11 +302,14 @@
 
     LibAFL heavily relies on shared memory maps for a wide range of internal functionality, including corpus synchronization across threads. It is further important for different kinds of \code{Feedback}, especially coverage information. Its built-in logic for adding coverage gathering instrumentation to a binary to test relies on passes in the clang compiler, specifically the \code{SanitizerCoverage}\cite{SanitizerCoverage} module. This module encompasses different levels of coverage instrumentation, the examples provided by LibAFL typically use \code{trace-pc-guard}. This will insert the call shown in Listing~\ref{listing:EdgeFunction} on every edge.
 
-    \begin{lstlisting}[language=C]
+        {
+
+            \begin{lstlisting}[language=C]
 __sanitizer_cov_trace_pc_guard(&guard_variable)
 \end{lstlisting}
-    \captionof{listing}{Inserted Call on Every Edge}
-    \label{listing:EdgeFunction}
+            \captionof{listing}{Inserted Call on Every Edge}
+            \label{listing:EdgeFunction}
+        }
 
     The implementation of this function is then left to the developer.  The LibAFL module \code{libafl\_targets} provides such implementations, which allocate a shared memory map with the correct size and then, on the execution of each edge, marks the memory section associated with it. Finally, a \code{MaxMapFeedback} can be employed as \code{Feedback} in the fuzzer, which prioritizes \code{Input}s that traverse new paths in the binary under test, given that additional bits are set in the shared memory map.
 
@@ -412,16 +412,17 @@ __sanitizer_cov_trace_pc_guard(&guard_variable)
     \subsection{Different Behavior Declared Consistent}
 
     uutils' website claims that \textquote{Differences with GNU are treated as bugs}\cite{UutilsCoreUtils}. However, this seems to only hold for information written to \code{stdout}. In its error messages, uutils' programs return additional information, such as a usage tip. Listings~\ref{listing:ErrorIllegalFlagGNU} and~\ref{listing:ErrorIllegalFlaguutils} show the differences when passing an illegal argument.
+        {
 
-    \begin{lstlisting}
+            \begin{lstlisting}
 $ gnu-base64 --invalid-flag
 gnu-base64: unrecognized option '--invalid-flag'
 Try 'gnu-base64 --help' for more information.
 \end{lstlisting}
-    \captionof{listing}{Error Message When Passing an Illegal Flag to GNU's Version of Coreutils}
-    \label{listing:ErrorIllegalFlagGNU}
+            \captionof{listing}{Error Message When Passing an Illegal Flag to GNU's Version of Coreutils}
+            \label{listing:ErrorIllegalFlagGNU}
 
-    \begin{lstlisting}
+            \begin{lstlisting}
 $ uutils-base64 --invalid-flag
 error: unexpected argument '--invalid-flag' found
 
@@ -431,26 +432,31 @@ Usage: uutils-base64 [OPTION]... [FILE]
 
 For more information, try '--help'.
 \end{lstlisting}
-    \captionof{listing}{Error Message When Passing an Illegal Flag to uutils's Version of Coreutils}
-    \label{listing:ErrorIllegalFlaguutils}
+            \captionof{listing}{Error Message When Passing an Illegal Flag to uutils's Version of Coreutils}
+            \label{listing:ErrorIllegalFlaguutils}
+        }
 
     Because of this, in its differential mode, the fuzzer reduces the information from the \code{stderr} of each process to a check for \textit{any} output. It reports an error if either implementation returns any data on \code{stderr} and the other does not, or if both do not print any data to \code{stderr} but print different data to \code{stdout}.
 
     The latter restriction was discovered by an intermediate version of the differential fuzzer. It is required due to an implementation detail: In \code{base64}, GNU's version prints valid bytes during the decoding process and, once it encounters invalid data, prints an error message. In contrast,uutils' version parses the entire input and before printing the output or error message. An example output can be found in Listings~\ref{listing:ErrorPartialOutputGNU} and~\ref{listing:ErrorPartialOutputuutils}.
 
-    \begin{lstlisting}
+    \columnbreak
+
+    {
+        \begin{lstlisting}
 $ echo "aa" | gnu-base64 --decode
 ignu-base64: invalid input
 \end{lstlisting}
-    \captionof{listing}{Error Message Including Partial Output (leading \code{i}) from GNU's \code{base64}}
-    \label{listing:ErrorPartialOutputGNU}
+        \captionof{listing}{Error Message Including Partial Output (leading \code{i}) from GNU's \code{base64}}
+        \label{listing:ErrorPartialOutputGNU}
 
-    \begin{lstlisting}
+        \begin{lstlisting}
 $ echo "aa" | uutils-base64 --decode
 uutils-base64: error: invalid input
 \end{lstlisting}
-    \captionof{listing}{Error Message Without Partial Output from uutils' \code{base64}}
-    \label{listing:ErrorPartialOutputuutils}
+        \captionof{listing}{Error Message Without Partial Output from uutils' \code{base64}}
+        \label{listing:ErrorPartialOutputuutils}
+    }
 
     Finally, the option for printing the version (aptly named \code{--version}) obviously prints different information. Similarly, \code{--help} prints different text, since it includes the file path. These options are unlikely to introduce business logic errors because of their simplicity and are thus both disregarded in this project.
 
@@ -463,7 +469,12 @@ uutils-base64: error: invalid input
 
     The fuzzer, as described in Section~\ref{Implementation}, contains multiple components that collectively influence the overall runtime of a single fuzzer execution. LibAFL contains performance collection code, which provided the results in Listing~\ref{listing:LibAFLIntrospection}. This analysis demonstrates that the majority of runtime is attributed to the target execution. The remaining functions that contribute significantly to the overall runtime of the fuzzer are the mutations, given that they are executed multiple times on each run, and the coverage analysis, which collectively account for less than 0.5~\% of the total runtime.
 
-    \begin{lstlisting}
+    In its full differential mode on a single thread, the fuzzer reports approximately 250 executions per second, or a runtime of 0.04 seconds per execution. The \code{TargetExecution} described in Listing~\ref{listing:LibAFLIntrospection} comprises multiple steps: the input is written to a file and fed to the binary under test, which is then run. The output of the program is captured, and coverage information is copied back to the fuzzer.
+
+    \columnbreak
+
+    {
+        \begin{lstlisting}
 Client 001:
   0.0000: Scheduler
   0.0000: Manager
@@ -484,64 +495,82 @@ Client 001:
     0.0000: StdoutEqDiffFeedback
   0.0005: Not Measured
 \end{lstlisting}
-    \captionof{listing}{Output from LibAFL's Introspection Modules}
-    \label{listing:LibAFLIntrospection}
-
-    In its full differential mode on a single thread, the fuzzer reports approximately 250 executions per second, or a runtime of 0.04 seconds per execution. The \code{TargetExecution} described in Listing~\ref{listing:LibAFLIntrospection} comprises multiple steps: the input is written to a file and fed to the binary under test, which is then run. The output of the program is captured, and coverage information is copied back to the fuzzer.
+        \captionof{listing}{Output from LibAFL's Introspection Modules}
+        \label{listing:LibAFLIntrospection}
+    }
 
     Figure~\ref{fig:coverage-instrumentation} compares the performance of GNU's and uutils' versions of coreutils with different approaches to coverage instrumentation. It shows that the performance of the two implementations without instrumentation is comparable, with the uutils version being slightly slower. The compared modes include tainting, or marking which edge has been executed, and counting, which counts how often an edge is passed. The latter requires an additional read access on each edge, and thus is slightly less performant than the first.
 
-    \begin{center}
-        \begin{tabular}{|c|c|}
-            \hline
-            Optimization Level               & Edge Count \\
-            \hline
-            GNU with {-O2}                   & 801        \\
-            uutils with \code{release-small} & 14939      \\
-            uutils with \code{release-fast}  & 18928      \\
-            uutils with \code{release}       & 27433      \\
-            \hline
-        \end{tabular}
-        \captionof{table}{Edge Count Depending on Version\\and Optimization}
-        \label{tab:edge_count}
-    \end{center}
+        {
+            \begin{center}
+                \begin{tabular}{|c|c|}
+                    \hline
+                    Optimization Level               & Edge Count \\
+                    \hline
+                    GNU with {-O2}                   & 801        \\
+                    uutils with \code{release-small} & 14939      \\
+                    uutils with \code{release-fast}  & 18928      \\
+                    uutils with \code{release}       & 27433      \\
+                    \hline
+                \end{tabular}
+                \captionof{table}{Edge Count Depending on Version\\and Optimization}
+                \label{tab:edge_count}
+            \end{center}
+        }
 
-    The addition of instrumentation to GNU's version of coreutils results in approximately a third increase in runtime, whereas this factor is considerably higher for uutils' version. Table~\ref{tab:edge_count} illustrates this discrepancy: the edge count is significantly larger for uutils' version compared to GNU's version. The runtime is dominated by the number of edges after a certain point, which explains why the profile optimising for small binary sizes is faster when instrumented compared to the profile optimising for runtime. The reason why clang produces a greater number of edges in Rust code compared to C code, at least for the discussed versions of \code{base64}, could not be evaluated in this project, but may be worthy of further investigation.
+    The addition of instrumentation to GNU's version of coreutils results in approximately a third increase in runtime, whereas this factor is considerably higher for uutils' version. Table~\ref{tab:edge_count} illustrates this discrepancy: the edge count is significantly larger for uutils' version compared to GNU's version. The runtime is dominated by the number of edges after a certain point, which explains why the profile optimising for small binary sizes is faster when instrumented compared to the profile optimising for runtime.
 
-    \includegraphics[width=\columnwidth]{assets/instrumentation.png}
-    \captionof{figure}{Performance Implications of Coverage Instrumentation}
-    \label{fig:coverage-instrumentation}
+        {
+            \includegraphics[width=\columnwidth]{assets/instrumentation.png}
+            \captionof{figure}{Performance Implications of Coverage Instrumentation}
+            \label{fig:coverage-instrumentation}
+        }
+
+    The reason why clang produces a greater number of edges in Rust code compared to C code, at least for the discussed versions of \code{base64}, could not be evaluated in this project, but may be worthy of further investigation.
 
     As pipes have a maximum size in Linux, the input cannot always be passed to the program under test directly. To circumvent this limitation, the fuzzer will write the input to a temporary file in an in-memory file system and pass this file to the program under test. Figure~\ref{fig:stdin-types} illustrates the impact of this approach on performance. While the performance impact is minimal for small input data, this is not necessarily the case for larger input data, as illustrated in Figure~\ref{fig:file-write}.
 
-    \includegraphics[width=\columnwidth]{assets/stdin_types.png}
-    \captionof{figure}{Performance Differences When Passing Input Data to \code{base64} Directly, with a Default File, and with a File Created on each Execution}
-    \label{fig:stdin-types}
 
     Figure~\ref{fig:dynamic-file-stdin} illustrates the impact of varying input sizes on the performance of \code{base64} in total. This includes the additional runtime shown in Figure~\ref{fig:file-write}, which demonstrates that the impact of writing the data to a file is an order of magnitude smaller than that of \code{base64}, and thus acceptable.
 
-    \includegraphics[width=\columnwidth]{assets/file_write.png}
-    \captionof{figure}{Runtime Changes when Writing Differently Sized Files}
-    \label{fig:file-write}
+        {
+            \includegraphics[width=\columnwidth]{assets/stdin_types.png}
+            \captionof{figure}{Performance Differences When Passing Input Data to \code{base64} Directly, with a Default File, and with a File Created on each Execution}
+            \label{fig:stdin-types}
+        }
 
-    \includegraphics[width=\columnwidth]{assets/dynamic_file_stdin.png}
-    \captionof{figure}{Runtime Changes when Executing \code{base64} on Inputs of Different Sizes}
-    \label{fig:dynamic-file-stdin}
+
+        {
+            \includegraphics[width=\columnwidth]{assets/file_write.png}
+            \captionof{figure}{Runtime Changes when Writing Differently Sized Files}
+            \label{fig:file-write}
+        }
+
+        {
+            \includegraphics[width=\columnwidth]{assets/dynamic_file_stdin.png}
+            \captionof{figure}{Runtime Changes when Executing \code{base64} on Inputs of Different Sizes}
+            \label{fig:dynamic-file-stdin}
+        }
 
     The Performance of shared memory as provided by the \code{MmapShmem} module in LibAFL is demonstrated in Figure~\ref{fig:shmem} to be comparable to writing an input file, thus eliminating the potential for problematic overhead. Finally, Figure~\ref{fig:preloads} presents the performance implications of hooking into the functions necessary for this fuzzer. Compared to the baseline, the first option merely hooks into \code{libc_start_main} and calls the program's main function with unaltered parameters. The second option also hooks into \code{libc_start_main}, but includes a hook for \code{rtld_fini} in its call to the main function. The hook in this example only calls the original \code{rtld_fini}, whereas the fuzzer uses this hook to copy coverage information to the shared memory.
 
-    \includegraphics[width=\columnwidth]{assets/shmem.png}
-    \captionof{figure}{Time to Allocate, Persist, Fill, and Check Shared Memory as Provided by \code{MmapShmem}}
-    \label{fig:shmem}
-    \includegraphics[width=\columnwidth]{assets/preloads.png}
-    \captionof{figure}{Performance Impact of \code{LD_PRELOAD}}
-    \label{fig:preloads}
-
     The overall performance of the fuzzers can be explained almost entirely by a combination of the aforementioned experiments, with the remaining runtime being introduced by minor additional logic such as output capturing.
+
+
+        {
+            \includegraphics[width=\columnwidth]{assets/shmem.png}
+            \captionof{figure}{Time to Allocate, Persist, Fill, and Check Shared Memory as Provided by \code{MmapShmem}}
+            \label{fig:shmem}
+            \includegraphics[width=\columnwidth]{assets/preloads.png}
+            \captionof{figure}{Performance Impact of \code{LD_PRELOAD}}
+            \label{fig:preloads}
+        }
 
     \subsubsection{Coverage}
 
     According to the fuzzer, only 9.854\% of edge coverage is reached in its differential mode. To gather additional information about this number, the GNU coreutils were additionally compiled with instrumentation for coverage analysis with \code{gcov}. The fuzzer was then instructed to execute \code{Input}s, that reached new edges on this version of the program under test. This is accomplished by introducing a new \code{Feedback}, which can be attached to the \code{MaxMapFeedback} using Boolean logic operators in a way it is only evaluated when the \code{MaxMapFeedback} considers the \code{Input} interesting. This new \code{Feedback} evaluates all \code{Input}s as interesting and simply runs the \code{gcov} instrumented binary with the current \code{Input}. This results in only 1690 executions on an evaluation run with millions of executions on the binaries under test, thus introducing negligible performance overhead.
+
+    \columnbreak
 
     An analysis of the results reported by \code{gcov} shows that 61.49\% of 161 lines were executed. After manually invoking \code{base64} with its \code{--help} and \code{--version} flags, gcov reported 83.23\% coverage. Manual inspection of the coverage file showed that the missing lines consist of \code{stdio} error handling code (e.g. write operations to \code{stdout}, which should never fail, since pipes are not intentionally broken by the fuzzer).
 
@@ -560,20 +589,22 @@ Client 001:
 
     To assess the efficacy of this fuzzer in identifying logic errors, an artificial bug was introduced into the source code of GNU's version of \code{base64} (see Listing~\ref{listing:artificial-bug}). This bug does not result in the program crashing or entering a state that would be flagged as a bug by conventional fuzzers. The fuzzer developed in this project identified this bug within minutes on multiple runs. This demonstrates that even bugs that have complex requirements on the input that trigger them can be found with this approach.
 
-    \begin{lstlisting}[language=C]
+        {
+            \begin{lstlisting}[language=C]
 void base64_encode(const char *restrict in, idx_t inlen, char *restrict out, idx_t outlen)
 {
-    if (inlen == 3)
-        if (in[0] == 'a')
-            if (in[1] == 'b')
-                if (in[2] == 'c')
-                    printf("Hello, World!");
+if (inlen == 3)
+    if (in[0] == 'a')
+        if (in[1] == 'b')
+            if (in[2] == 'c')
+                printf("Hello, World!");
 
-    [remaining function code]
+[remaining function code]
 }
 \end{lstlisting}
-    \captionof{listing}{Inserted Artificial Bug}
-    \label{listing:artificial-bug}
+            \captionof{listing}{Inserted Artificial Bug}
+            \label{listing:artificial-bug}
+        }
 
 
     \section{State of the Art}
@@ -723,12 +754,25 @@ void base64_encode(const char *restrict in, idx_t inlen, char *restrict out, idx
     A novel approach to transferring coverage information from a program executed as a separate process is employed, whereby the programs under test are extended with an interface to dynamically access coverage information without any changes to the source code. The system dynamically loads and links helper binaries during execution, providing coverage information in a manner that is idiomatically readable by LibAFL's coverage guidance modules.
     Due to incomplete functionality in LibAFL, the fuzzer produced in this project could only be evaluated on base64, where it achieved full coverage but did not discover any software errors. Further extensive tests will be required as a base for a full evaluation once the missing logic has been added to LibAFL.
 
-    In the interest of open science, this project is released under an open-source license. During development, over 500 lines of code have been introduced to the upstream project, with further major changes already in discussion. The source code of the project is publicly available at \href{https://github.com/riesentoaster/coreutils-differential-fuzzing}{https://github.com/riesentoaster/coreutils-differential-fuzzing}.
 
+
+\end{multicols}
+\vspace{70px}
+\begin{center}
+
+    \begin{minipage}{0.7\textwidth}
+        \centering
+        In the interest of open science, this project is released under an open-source license. During development, over 500 lines of code have been introduced to the upstream project, with further major changes already in discussion. The source code of the project is publicly available at\\\vspace{8px}\href{https://github.com/riesentoaster/coreutils-differential-fuzzing}{https://github.com/riesentoaster/coreutils-differential-fuzzing}.
+    \end{minipage}
+
+\end{center}
+
+\pagebreak
+
+\begin{multicols}{2}
     \defbibheading{bibliography}[\bibname]{\section*{#1}}
     \addcontentsline{toc}{section}{\bibname}
     \printbibliography
-
 \end{multicols}
 
 \end{document}
