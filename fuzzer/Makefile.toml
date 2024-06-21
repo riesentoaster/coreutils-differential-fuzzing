@@ -77,7 +77,7 @@ make
 [tasks.uutils_coreutils]
 script_runner = "@shell"
 condition = { files_not_exist = [
-    "./${CARGO_TARGET_DIR}/uutils_coreutils/target/release/coreutils",
+    "./${CARGO_TARGET_DIR}/uutils_coreutils/target/release/",
 ] }
 dependencies = ["coverage_collector", "create_target_dir"]
 script = '''
@@ -98,9 +98,10 @@ export RUSTFLAGS=" \
     -Clink-arg=-rdynamic \
     -Clink-arg=${COVERAGE_FILE}"
 
-export PROFILE="release"
+cargo build --profile release-small \
+    -p uu_base64 # build base64 binary only
 
-make
+mv ./target/release-small ./target/release
 '''
 
 [tasks.coreutils]
@@ -129,7 +130,7 @@ cargo build --profile ${PROFILE}
 '''
 
 [tasks.fuzzer_gnu]
-dependencies = ["GNU_coreutils", "preloads"]
+dependencies = ["gnu_coreutils", "preloads"]
 script_runner = "@shell"
 script = '''
 cargo build --profile ${PROFILE} --no-default-features --features gnu
@@ -143,7 +144,6 @@ cargo build --profile ${PROFILE} --no-default-features --features uutils
 '''
 
 [tasks.clear_gcov_coverage]
-dependencies = ["gnu_coreutils_coverage"]
 script_runner = "@shell"
 script = '''
 rm -f ./*.gcov

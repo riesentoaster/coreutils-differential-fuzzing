@@ -3,3 +3,6 @@
 /corpus*
 *.log
 *.gcov
+logs
+monitor.toml
+monitor.json

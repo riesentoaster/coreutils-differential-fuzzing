@@ -122,7 +122,7 @@ where
 
 impl Named for DiffStdIOMetadataPseudoFeedback {
     fn name(&self) -> &Cow<'static, str> {
-        &Cow::Borrowed("diff-stdio-metadata-pseudo-feedback")
+        &Cow::Borrowed("DiffStdioMetadataPseudoFeedback")
     }
 }
 

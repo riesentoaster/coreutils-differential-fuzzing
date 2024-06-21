@@ -1,12 +1,11 @@
 mod base64;
 mod generic;
 
-use std::path::PathBuf;
+use std::{path::PathBuf, time::Duration};
 
-use base64::{base64_mutators, Base64Generator};
+use base64::{base64_mutators, Base64Generator, GeneratorType};
 
 use generic::{
-    cov_feedback::CovFeedback,
     executor::CoverageCommandExecutor,
     shmem::{get_coverage_shmem_size, get_shmem},
 };
@@ -14,12 +13,10 @@ use generic::{
 use libafl::{
     corpus::OnDiskCorpus,
     events::{EventConfig, Launcher, LlmpRestartingEventManager},
-    feedback_or_fast,
-    feedbacks::{AflMapFeedback, CrashFeedback, DiffExitKindFeedback, TimeoutFeedback},
+    feedbacks::{AflMapFeedback, CrashFeedback},
+    monitors::OnDiskTOMLMonitor,
     mutators::StdMOptMutator,
-    observers::{
-        HitcountsIterableMapObserver, StdErrObserver, StdMapObserver, StdOutObserver, TimeObserver,
-    },
+    observers::{StdErrObserver, StdMapObserver, StdOutObserver, TimeObserver},
     schedulers::{powersched::PowerSchedule, StdWeightedScheduler},
     stages::StdMutationalStage,
     state::StdState,
@@ -38,15 +35,29 @@ use libafl_bolts::{
 
 #[cfg(feature = "differential")]
 use {
-    generic::stdio::DiffStdIOMetadataPseudoFeedback,
+    generic::{
+        always_feedback::AlwaysFeedback, stdio::DiffStdIOMetadataPseudoFeedback,
+        timeout::AnyTimeoutFeedback,
+    },
     libafl::{
         executors::DiffExecutor,
-        feedback_and_fast, feedback_or,
-        feedbacks::{differential::DiffResult, ConstFeedback, DiffFeedback, TimeFeedback},
-        observers::MultiMapObserver,
+        feedback_and_fast, feedback_or, feedback_or_fast,
+        feedbacks::{
+            differential::DiffResult, ConstFeedback, DiffExitKindFeedback, DiffFeedback,
+            TimeFeedback,
+        },
+        observers::{HitcountsIterableMapObserver, MultiMapObserver},
     },
     libafl_bolts::ownedref::OwnedMutSlice,
 };
+
+#[cfg(feature = "gcov")]
+use generic::cov_feedback::CovFeedback;
+
+#[cfg(not(feature = "on_disk_corpus"))]
+use libafl::corpus::InMemoryCorpus;
+#[cfg(feature = "on_disk_corpus")]
+use libafl::corpus::InMemoryOnDiskCorpus;
 
 #[cfg(feature = "tui")]
 use libafl::monitors::tui::{ui::TuiUI, TuiMonitor};
@@ -77,9 +88,14 @@ fn fuzz(util: &str) -> Result<(), Error> {
     let options = parse_args();
 
     #[cfg(not(feature = "tui"))]
-    let monitor = MultiMonitor::new(|s| println!("{}", s));
+    let base_monitor = MultiMonitor::new(|s| println!("{}", s));
     #[cfg(feature = "tui")]
-    let monitor = TuiMonitor::new(TuiUI::new("coreutils fuzzer".to_string(), true));
+    let base_monitor = TuiMonitor::new(TuiUI::new("coreutils fuzzer".to_string(), true));
+    let monitor = OnDiskTOMLMonitor::with_update_interval(
+        "monitor.toml",
+        base_monitor,
+        Duration::from_millis(100),
+    );
 
     #[cfg(feature = "uutils")]
     let (uutils_coverage_shmem_size, uutils_path) =
@@ -102,7 +118,7 @@ fn fuzz(util: &str) -> Result<(), Error> {
 
         #[cfg(feature = "differential")]
         let combined_coverage_observer = HitcountsIterableMapObserver::new(
-            MultiMapObserver::differential("combined-coverage", unsafe {
+            MultiMapObserver::differential("CombinedCoverage", unsafe {
                 vec![
                     OwnedMutSlice::from_raw_parts_mut(
                         uutils_coverage_shmem.as_mut_ptr(),
@@ -144,7 +160,7 @@ fn fuzz(util: &str) -> Result<(), Error> {
         #[cfg(feature = "differential")]
         let (mut feedback, mut objective) = (|| -> Result<_, Error> {
             let stdout_diff_feedback = DiffFeedback::new(
-                "stdout-eq-diff-feedback",
+                "StdoutEqDiffFeedback",
                 &uutils_stdout_observer,
                 &gnu_stdout_observer,
                 |o1, o2| {
@@ -156,28 +172,8 @@ fn fuzz(util: &str) -> Result<(), Error> {
                 },
             )?;
 
-            // let stderr_xor_feedback = DiffFeedback::new(
-            //     "stderr-eq-diff-feedback",
-            //     &uutils_stderr_observer,
-            //     &gnu_stderr_observer,
-            //     |o1, o2| {
-            //         if let Some(r1) = has_stderr(o1) {
-            //             if let Some(r2) = has_stderr(o2) {
-            //                 if r1 == r2 {
-            //                     return DiffResult::Equal;
-            //                 }
-            //             } else {
-            //                 println!("XOR: No stderr for GNU");
-            //             }
-            //         } else {
-            //             println!("XOR: No stderr for uutils");
-            //         }
-            //         DiffResult::Diff
-            //     },
-            // )?;
-
             let stderr_neither_feedback = DiffFeedback::new(
-                "stderr-neither-diff-feedback",
+                "StderrNeitherDiffFeedback",
                 &uutils_stderr_observer,
                 &gnu_stderr_observer,
                 |o1, o2| {
@@ -196,6 +192,7 @@ fn fuzz(util: &str) -> Result<(), Error> {
                 },
             )?;
 
+            #[cfg(feature = "gcov")]
             let gcov_feedback = CovFeedback::new(
                 true,
                 format!("{GNU_GCOV_PREFIX}{util}"),
@@ -213,19 +210,32 @@ fn fuzz(util: &str) -> Result<(), Error> {
 
             let coverage_feedback = AflMapFeedback::new(&combined_coverage_observer);
 
+            #[cfg(feature = "gcov")]
             let feedback = feedback_or_fast!(
+                AlwaysFeedback,
                 feedback_and_fast!(coverage_feedback, gcov_feedback),
+                metadata_pseudo_feedback.clone()
+            );
+            #[cfg(not(feature = "gcov"))]
+            let feedback = feedback_or_fast!(
+                AlwaysFeedback,
+                coverage_feedback,
                 metadata_pseudo_feedback.clone()
             );
 
             // only add logger feedbacks if something was found
             let objective = feedback_and_fast!(
                 feedback_or_fast!(
-                    // only test stdout equality if neither has a stderr
-                    DiffExitKindFeedback::new(),
                     CrashFeedback::new(),
-                    TimeoutFeedback::new(),
-                    feedback_and_fast!(stderr_neither_feedback, stdout_diff_feedback) // ,stderr_xor_feedback
+                    // only check timeout concerning exit_kinds if none include a timeout
+                    feedback_and_fast!(
+                        AnyTimeoutFeedback,
+                        feedback_or_fast!(
+                            DiffExitKindFeedback::new(),
+                            // only test stdout equality if neither has a stderr
+                            feedback_and_fast!(stderr_neither_feedback, stdout_diff_feedback)
+                        )
+                    )
                 ),
                 feedback_or!(
                     metadata_pseudo_feedback,
@@ -240,26 +250,33 @@ fn fuzz(util: &str) -> Result<(), Error> {
 
         #[cfg(all(not(feature = "differential"), feature = "gnu"))]
         let (mut feedback, mut objective) = {
+            #[cfg(feature = "gcov")]
             let gcov_feedback = CovFeedback::new(
                 true,
                 format!("{GNU_GCOV_PREFIX}{util}"),
                 format!("cov-{:?}", core_id.0),
             );
+            #[cfg(feature = "gcov")]
             let feedback =
                 feedback_and_fast!(AflMapFeedback::new(&gnu_coverage_observer), gcov_feedback);
-            let objective = feedback_or_fast!(CrashFeedback::new(), TimeoutFeedback::new());
+            #[cfg(not(feature = "gcov"))]
+            let feedback = AflMapFeedback::new(&gnu_coverage_observer);
+            let objective = CrashFeedback::new();
             (feedback, objective)
         };
         #[cfg(all(not(feature = "differential"), feature = "uutils"))]
         let (mut feedback, mut objective) = {
             let feedback = AflMapFeedback::new(&uutils_coverage_observer);
-            let objective = feedback_or_fast!(CrashFeedback::new(), TimeoutFeedback::new());
+            let objective = CrashFeedback::new();
             (feedback, objective)
         };
         let mut state = state.unwrap_or_else(|| {
             StdState::new(
                 StdRand::with_seed(current_nanos()),
-                OnDiskCorpus::new(PathBuf::from("corpus")).unwrap(),
+                #[cfg(feature = "on_disk_corpus")]
+                InMemoryOnDiskCorpus::new(PathBuf::from("corpus")).unwrap(),
+                #[cfg(not(feature = "on_disk_corpus"))]
+                InMemoryCorpus::new(),
                 OnDiskCorpus::new(PathBuf::from(&options.output)).unwrap(),
                 &mut feedback,
                 &mut objective,
@@ -322,7 +339,7 @@ fn fuzz(util: &str) -> Result<(), Error> {
             state.generate_initial_inputs(
                 &mut fuzzer,
                 &mut executor,
-                &mut Base64Generator::new(2),
+                &mut Base64Generator::new(1, 10, GeneratorType::Printable),
                 &mut mgr,
                 8,
             )?

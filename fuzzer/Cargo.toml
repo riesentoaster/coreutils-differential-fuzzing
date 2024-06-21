@@ -9,9 +9,9 @@ license = "MIT"
 members = ["get_guard_num", "setup_guard_redirection"]
 
 [profile.release]
-# lto = true
-# codegen-units = 1
-# opt-level = 3
+lto = true
+codegen-units = 1
+opt-level = 3
 debug = true
 
 [features]
@@ -20,6 +20,8 @@ gnu = []
 uutils = []
 differential = ["gnu", "uutils"]
 tui = []
+gcov = []
+on_disk_corpus = []
 introspection = ["libafl/scalability_introspection", "libafl/introspection"]
 
 [dependencies]

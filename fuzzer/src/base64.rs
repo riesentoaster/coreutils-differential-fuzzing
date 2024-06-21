@@ -113,13 +113,26 @@ impl Base64Input {
     }
 }
 
+#[allow(dead_code)]
+pub enum GeneratorType {
+    Random,
+    Printable,
+    A,
+}
+
 pub struct Base64Generator {
-    input_size: u32,
+    min_size: usize,
+    max_size: usize,
+    generator_type: GeneratorType,
 }
 
 impl Base64Generator {
-    pub fn new(input_size: u32) -> Self {
-        Self { input_size }
+    pub fn new(min_size: usize, max_size: usize, generator_type: GeneratorType) -> Self {
+        Self {
+            min_size,
+            max_size,
+            generator_type,
+        }
     }
 }
 
@@ -128,15 +141,15 @@ where
     S: HasRand,
 {
     fn generate(&mut self, state: &mut S) -> Result<Base64Input, Error> {
-        let input = &generate_bytes(state, self.input_size);
-
         let rand = state.rand_mut();
+        let size = rand.between(self.min_size, self.max_size);
+        let input = generate_bytes(rand, size, &self.generator_type);
         let decode = rand.coinflip(0.5);
         let ignore_garbage = rand.coinflip(0.5);
         let wrap = rand
             .coinflip(0.5)
             .then(|| rand.between(i8::MIN as usize, i8::MAX as usize) as i8);
-        Ok(Base64Input::new(input, decode, ignore_garbage, wrap))
+        Ok(Base64Input::new(&input, decode, ignore_garbage, wrap))
     }
 }
 
@@ -223,10 +236,16 @@ impl Named for Base64WrapContentMutator {
     }
 }
 
-fn generate_bytes<S: HasRand>(state: &mut S, len: u32) -> Vec<u8> {
-    (0..len)
-        .map(|_e| state.rand_mut().below(u8::MAX as usize + 1) as u8)
-        .collect::<Vec<_>>()
+fn generate_bytes<R: Rand>(state: &mut R, len: usize, generator_type: &GeneratorType) -> Vec<u8> {
+    match generator_type {
+        GeneratorType::Random => (0..len)
+            .map(|_e| state.below(u8::MAX as usize + 1) as u8)
+            .collect::<Vec<_>>(),
+        GeneratorType::Printable => (0..len)
+            .map(|_e| state.between(0x20, 0x7F) as u8)
+            .collect::<Vec<_>>(),
+        GeneratorType::A => vec![0x61; len],
+    }
 }
 
 pub fn base64_mutators() -> tuple_list_type!(
