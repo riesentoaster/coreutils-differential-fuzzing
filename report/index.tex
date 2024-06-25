@@ -719,7 +719,6 @@ if (inlen == 3)
         \item Introduction of \code{DiffExitKindFeedback}, which compares the \code{ExitKind} of two \code{Executor}s in differential fuzzing and reports discrepancies (\href{https://github.com/AFLplusplus/LibAFL/pull/2246}{PR~\#2246})
         \item A bugfix for \code{MmapShmemProvider} (\href{https://github.com/AFLplusplus/LibAFL/pull/2298}{PR~\#2298})
         \item Fixes to the handling of \code{StdOutObserver} and \code{StdErrObserver} and an example fuzzer to demonstrate their usage as part of a refactoring in collaboration with LibAFL's maintainers (\href{https://github.com/AFLplusplus/LibAFL/pull/2311}{PR~\#2311})
-        \item
     \end{itemize}
 
     Based on feedback by the author of this work, the author in collaboration with LibAFL's maintainers began work on \code{tuple_list} and moving from \code{HasBytesArray} to \code{HasMutatorBytes}, in preparation of introducing \code{MappingMutator} to allow byte array mutation based on default \code{Mutator}s on arbitrary parts of a custom \code{Input}.
