@@ -2,7 +2,7 @@
 
 ## Report
 
-Read the report [here](./report/out/index.pdf). Its artifacts are in the `report` subdirectory.
+Read the report [here](./report/out/index.pdf). Its artifacts are in the `report` subdirectory. The report is licensed under [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/).
 
 ## Performance Tests
 
