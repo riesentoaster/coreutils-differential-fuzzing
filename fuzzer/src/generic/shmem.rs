@@ -1,8 +1,7 @@
-use std::{io::Error as IOError, path::Path, process::Command};
+use std::{path::Path, process::Command};
 
 use libafl::Error;
 use libafl_bolts::shmem::{MmapShMem, MmapShMemProvider, ShMem, ShMemDescription, ShMemProvider};
-use libc::{fcntl, FD_CLOEXEC, F_GETFD, F_SETFD};
 
 pub fn get_coverage_shmem_size(util: String) -> Result<(usize, String), Error> {
     if !Path::new(&util).exists() {
@@ -30,33 +29,14 @@ pub fn get_coverage_shmem_size(util: String) -> Result<(usize, String), Error> {
     }
 }
 
-fn make_shmem_persist(description: &ShMemDescription) -> Result<(), Error> {
-    let fd = description.id.as_str().parse().unwrap();
-    let flags = unsafe { fcntl(fd, F_GETFD) };
-
-    if flags == -1 {
-        return Err(Error::os_error(
-            IOError::last_os_error(),
-            "Failed to retrieve FD flags",
-        ));
-    }
-    let result = unsafe { fcntl(fd, F_SETFD, flags & !FD_CLOEXEC) };
-    if result == -1 {
-        return Err(Error::os_error(
-            IOError::last_os_error(),
-            "Failed to set FD flags",
-        ));
-    }
-    Ok(())
-}
-
 pub fn get_shmem(size: usize) -> Result<(MmapShMem, ShMemDescription), Error> {
     let mut shmem_provider = MmapShMemProvider::default();
     let shmem = shmem_provider
         .new_shmem(size)
         .expect("Could not get the shared memory map");
 
+    shmem.persist_for_child_processes()?;
+
     let shmem_description = shmem.description();
-    make_shmem_persist(&shmem_description)?;
     Ok((shmem, shmem_description))
 }

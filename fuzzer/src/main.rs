@@ -14,7 +14,7 @@ use libafl::{
     corpus::OnDiskCorpus,
     events::{EventConfig, Launcher, LlmpRestartingEventManager},
     feedbacks::{AflMapFeedback, CrashFeedback},
-    monitors::OnDiskTOMLMonitor,
+    monitors::OnDiskTomlMonitor,
     mutators::StdMOptMutator,
     observers::{StdErrObserver, StdMapObserver, StdOutObserver, TimeObserver},
     schedulers::{powersched::PowerSchedule, StdWeightedScheduler},
@@ -29,16 +29,13 @@ use libafl_bolts::{
     current_nanos,
     rands::StdRand,
     shmem::{ShMemProvider, StdShMemProvider},
-    tuples::tuple_list,
+    tuples::{tuple_list, Handled},
     AsSliceMut,
 };
 
 #[cfg(feature = "differential")]
 use {
-    generic::{
-        always_feedback::AlwaysFeedback, stdio::DiffStdIOMetadataPseudoFeedback,
-        timeout::AnyTimeoutFeedback,
-    },
+    generic::{stdio::DiffStdIOMetadataPseudoFeedback, timeout::AnyTimeoutFeedback},
     libafl::{
         executors::DiffExecutor,
         feedback_and_fast, feedback_or, feedback_or_fast,
@@ -54,13 +51,16 @@ use {
 #[cfg(feature = "gcov")]
 use generic::cov_feedback::CovFeedback;
 
+#[cfg(feature = "log_new_corpus_entries")]
+use generic::new_corpus_entry_log_feedback::NewCorpusEntryLogFeedback;
+
 #[cfg(not(feature = "on_disk_corpus"))]
 use libafl::corpus::InMemoryCorpus;
 #[cfg(feature = "on_disk_corpus")]
 use libafl::corpus::InMemoryOnDiskCorpus;
 
 #[cfg(feature = "tui")]
-use libafl::monitors::tui::{ui::TuiUI, TuiMonitor};
+use libafl::monitors::tui::TuiMonitor;
 #[cfg(not(feature = "tui"))]
 use libafl::monitors::MultiMonitor;
 
@@ -90,8 +90,10 @@ fn fuzz(util: &str) -> Result<(), Error> {
     #[cfg(not(feature = "tui"))]
     let base_monitor = MultiMonitor::new(|s| println!("{}", s));
     #[cfg(feature = "tui")]
-    let base_monitor = TuiMonitor::new(TuiUI::new("coreutils fuzzer".to_string(), true));
-    let monitor = OnDiskTOMLMonitor::with_update_interval(
+    let base_monitor = TuiMonitor::builder()
+        .title("coreutils differential fuzzer")
+        .build();
+    let monitor = OnDiskTomlMonitor::with_update_interval(
         "monitor.toml",
         base_monitor,
         Duration::from_millis(100),
@@ -212,16 +214,14 @@ fn fuzz(util: &str) -> Result<(), Error> {
 
             #[cfg(feature = "gcov")]
             let feedback = feedback_or_fast!(
-                AlwaysFeedback,
                 feedback_and_fast!(coverage_feedback, gcov_feedback),
                 metadata_pseudo_feedback.clone()
             );
             #[cfg(not(feature = "gcov"))]
-            let feedback = feedback_or_fast!(
-                AlwaysFeedback,
-                coverage_feedback,
-                metadata_pseudo_feedback.clone()
-            );
+            let feedback = feedback_or_fast!(coverage_feedback, metadata_pseudo_feedback.clone());
+
+            #[cfg(feature = "log_new_corpus_entries")]
+            let feedback = feedback_or_fast!(NewCorpusEntryLogFeedback, feedback);
 
             // only add logger feedbacks if something was found
             let objective = feedback_and_fast!(
@@ -299,6 +299,8 @@ fn fuzz(util: &str) -> Result<(), Error> {
         #[cfg(feature = "uutils")]
         let uutils_executor = CoverageCommandExecutor::new(
             &uutils_coverage_shmem_description,
+            Some(uutils_stdout_observer.handle()),
+            Some(uutils_stderr_observer.handle()),
             tuple_list!(
                 uutils_coverage_observer,
                 uutils_stdout_observer,
@@ -312,6 +314,8 @@ fn fuzz(util: &str) -> Result<(), Error> {
         #[cfg(feature = "gnu")]
         let gnu_executor = CoverageCommandExecutor::new(
             &gnu_coverage_shmem_description,
+            Some(gnu_stdout_observer.handle()),
+            Some(gnu_stderr_observer.handle()),
             tuple_list!(
                 gnu_coverage_observer,
                 gnu_stdout_observer,

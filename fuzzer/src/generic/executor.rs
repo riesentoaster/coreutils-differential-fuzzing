@@ -10,10 +10,14 @@ use std::{
 
 use libafl::{
     executors::{command::CommandConfigurator, CommandExecutor},
+    observers::{StdErrObserver, StdOutObserver},
     state::State,
     Error,
 };
-use libafl_bolts::{shmem::ShMemDescription, tuples::MatchName};
+use libafl_bolts::{
+    shmem::ShMemDescription,
+    tuples::{Handle, MatchName},
+};
 use serde::Serialize;
 
 // Create the executor for an in-process function with just one observer
@@ -21,6 +25,8 @@ use serde::Serialize;
 pub struct CoverageCommandExecutor<I: ExtractsToCommand> {
     shmem_coverage_description: String,
     temp_file_stdin_path: String,
+    stdout_observer: Option<Handle<StdOutObserver>>,
+    stderr_observer: Option<Handle<StdErrObserver>>,
     util: String,
     phantom: PhantomData<I>,
 }
@@ -28,6 +34,8 @@ pub struct CoverageCommandExecutor<I: ExtractsToCommand> {
 impl<I: ExtractsToCommand> CoverageCommandExecutor<I> {
     pub fn new<OT, S, ID>(
         shmem_coverage_description: &ShMemDescription,
+        stdout_observer: Option<Handle<StdOutObserver>>,
+        stderr_observer: Option<Handle<StdErrObserver>>,
         observers: OT,
         util: &str,
         id: ID,
@@ -44,6 +52,8 @@ impl<I: ExtractsToCommand> CoverageCommandExecutor<I> {
         let configurator = Self {
             shmem_coverage_description: serialized_description,
             temp_file_stdin_path: format!("/dev/shm/temp{}", id.to_string()),
+            stdout_observer,
+            stderr_observer,
             util: util.to_string(),
             phantom: PhantomData,
         };
@@ -80,6 +90,14 @@ where
 
     fn exec_timeout(&self) -> Duration {
         Duration::from_secs(30)
+    }
+
+    fn stdout_observer(&self) -> Option<Handle<StdOutObserver>> {
+        self.stdout_observer.clone()
+    }
+
+    fn stderr_observer(&self) -> Option<Handle<StdErrObserver>> {
+        self.stderr_observer.clone()
     }
 }
 

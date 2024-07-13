@@ -5,18 +5,18 @@ use libafl::{
     events::EventFirer,
     executors::ExitKind,
     feedbacks::Feedback,
-    inputs::{HasBytesVec, UsesInput},
+    inputs::{HasMutatorBytes, UsesInput},
     observers::ObserversTuple,
     state::State,
     Error,
 };
 use libafl_bolts::Named;
 
-pub struct AlwaysFeedback;
-impl<S> Feedback<S> for AlwaysFeedback
+pub struct NewCorpusEntryLogFeedback;
+impl<S> Feedback<S> for NewCorpusEntryLogFeedback
 where
     S: State + UsesInput,
-    S::Input: HasBytesVec,
+    S::Input: HasMutatorBytes,
 {
     fn is_interesting<EM, OT>(
         &mut self,
@@ -52,8 +52,8 @@ where
     }
 }
 
-impl Named for AlwaysFeedback {
+impl Named for NewCorpusEntryLogFeedback {
     fn name(&self) -> &Cow<'static, str> {
-        &Cow::Borrowed("AlwaysFeedback")
+        &Cow::Borrowed("NewCorpusEntryLogFeedback")
     }
 }

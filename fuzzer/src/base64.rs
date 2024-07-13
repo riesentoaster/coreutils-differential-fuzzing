@@ -9,8 +9,9 @@ use std::{
 use serde::{Deserialize, Serialize};
 
 use libafl::{
+    corpus::CorpusId,
     generators::Generator,
-    inputs::{HasBytesVec, Input},
+    inputs::{HasMutatorBytes, Input},
     mutators::{havoc_mutations, MutationResult, Mutator},
     state::HasRand,
     Error, SerdeAny,
@@ -54,8 +55,7 @@ impl Display for Base64Input {
 }
 
 impl Input for Base64Input {
-    #[must_use]
-    fn generate_name(&self, _idx: usize) -> String {
+    fn generate_name(&self, _id: Option<CorpusId>) -> String {
         let mut hasher = DefaultHasher::new();
         self.hash(&mut hasher);
         format!("{:016x}", hasher.finish())
@@ -85,13 +85,40 @@ impl ExtractsToCommand for Base64Input {
     }
 }
 
-impl HasBytesVec for Base64Input {
+impl HasMutatorBytes for Base64Input {
     fn bytes(&self) -> &[u8] {
         &self.input
     }
 
-    fn bytes_mut(&mut self) -> &mut Vec<u8> {
+    fn bytes_mut(&mut self) -> &mut [u8] {
         &mut self.input
+    }
+
+    fn resize(&mut self, new_len: usize, value: u8) {
+        self.input.resize(new_len, value)
+    }
+
+    fn extend<'a, I: IntoIterator<Item = &'a u8>>(&mut self, iter: I) {
+        self.input.extend(iter)
+    }
+
+    fn splice<R, I>(
+        &mut self,
+        range: R,
+        replace_with: I,
+    ) -> libafl::prelude::alloc::vec::Splice<'_, I::IntoIter>
+    where
+        R: std::ops::RangeBounds<usize>,
+        I: IntoIterator<Item = u8>,
+    {
+        self.input.splice(range, replace_with)
+    }
+
+    fn drain<R>(&mut self, range: R) -> libafl::prelude::alloc::vec::Drain<'_, u8>
+    where
+        R: std::ops::RangeBounds<usize>,
+    {
+        self.input.drain(range)
     }
 }
 
